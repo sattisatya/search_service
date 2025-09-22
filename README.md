@@ -242,6 +242,7 @@ Get detailed insight by ID.
 {
 "question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
 "session_id": "optional-session-id"
+
 }
 ```
 
