@@ -61,9 +61,7 @@ Intelligent question answering with session context.
 ```json
 {
   "question": "What is a C-ESMP and what does it include?",
-  "session_id": "optional-session-id",
-  "top_k": 1,
-  "candidates": 1000
+  "session_id": "optional-session-id"
 }
 ```
 
@@ -242,7 +240,8 @@ Get detailed insight by ID.
 **Request**
 ```json
 {
-"question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control."
+"question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
+"session_id": "optional-session-id"
 }
 ```
 
