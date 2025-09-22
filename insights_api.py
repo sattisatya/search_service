@@ -68,42 +68,42 @@ async def get_insights():
 
 
 
-# Get one (GET /insights/{insight_id})
-@router.get("/{insight_id}", response_model=DetailedInsightResponse)
-async def get_insight_by_id(insight_id: str):
-    # Connect to MongoDB
-    mongo_client, collection = connect_to_mongodb()
-    if mongo_client is None or collection is None:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-    try:
-        # Find document by Insight ID
-        doc = collection.find_one({"Insight ID": insight_id})
+# # Get one (GET /insights/{insight_id})
+# @router.get("/{insight_id}", response_model=DetailedInsightResponse)
+# async def get_insight_by_id(insight_id: str):
+#     # Connect to MongoDB
+#     mongo_client, collection = connect_to_mongodb()
+#     if mongo_client is None or collection is None:
+#         raise HTTPException(status_code=500, detail="Database connection failed")
+#     try:
+#         # Find document by Insight ID
+#         doc = collection.find_one({"Insight ID": insight_id})
         
-        if not doc:
-            raise HTTPException(status_code=404, detail="Not found")
+#         if not doc:
+#             raise HTTPException(status_code=404, detail="Not found")
         
-        # Collect follow-up questions
-        follow_ups = []
-        for i in range(1, 4):
-            key = f"follow_up_question_{i}"
-            if doc.get(key):
-                follow_ups.append(doc[key])
+#         # Collect follow-up questions
+#         follow_ups = []
+#         for i in range(1, 4):
+#             key = f"follow_up_question_{i}"
+#             if doc.get(key):
+#                 follow_ups.append(doc[key])
         
-        # Return detailed insight response
-        return DetailedInsightResponse(
-            id=doc.get("Insight ID", ""),
-            insight=doc.get("insight", ""),
-            detailed_answer=doc.get("detailed_answer", ""),
-            follow_up_questions=follow_ups
-        )
+#         # Return detailed insight response
+#         return DetailedInsightResponse(
+#             id=doc.get("Insight ID", ""),
+#             insight=doc.get("insight", ""),
+#             detailed_answer=doc.get("detailed_answer", ""),
+#             follow_up_questions=follow_ups
+#         )
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
     
-    finally:
-        mongo_client.close()
+#     finally:
+#         mongo_client.close()
 
 app.include_router(router)
 
