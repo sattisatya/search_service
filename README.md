@@ -269,8 +269,6 @@ Get detailed insight by ID.
 class QuestionRequest(BaseModel):
     question: str                    # Required: User's question
     session_id: Optional[str] = None # Optional: Session ID (auto-generated if not provided)
-    top_k: Optional[int] = 1         # Optional: Number of results to consider
-    candidates: Optional[int] = 1000 # Optional: Vector search candidates
 ```
 
 #### `InsightResponse`
