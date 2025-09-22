@@ -122,8 +122,116 @@ List all insights (newest first).
 ```json
 [
   {
-    "id": "insight-1",
-    "insight": "Machine Learning Fundamentals"
+    "id": "insight_I10",
+    "insight": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
+    "tags": [
+      "Project: Roads & Infrastructure for Zone 1A",
+      "Date: All Meetings",
+      "Event: Multi-Meeting Insights",
+      "Collaboration",
+      "Quality Control",
+      "Stakeholder Management"
+    ]
+  },
+  {
+    "id": "insight_I9",
+    "insight": "A significant risk of 'contractor over-dependence' has been identified, as the current contractor holds three other CRDA contracts, necessitating a new monitoring protocol.",
+    "tags": [
+      "Project: Roads & Infrastructure for Zone 1A",
+      "Date: 10 December 2025",
+      "Event: Finance & Risk Review",
+      "Risk Management",
+      "Contractor Over-commitment"
+    ]
+  },
+  {
+    "id": "insight_I8",
+    "insight": "The projectâ€™s payment process is tied directly to performance and external verification, indicating a strong focus on quality assurance before financial disbursements.",
+    "tags": [
+      "Project: Roads & Infrastructure for Zone 1A",
+      "Date: 10 December 2025",
+      "Event: Finance & Risk Review",
+      "Payments",
+      "Quality Control"
+    ]
+  },
+  {
+    "id": "insight_I7",
+    "insight": "Environmental compliance, particularly regarding dust suppression, has been identified as a key area of concern that requires immediate action and a formal audit.",
+    "tags": [
+      "Project: Roads & Infrastructure for Zone 1A",
+      "Date: 20 July 2025",
+      "Event: Technical Review",
+      "Environmental Compliance",
+      "Dust Suppression"
+    ]
+  },
+  {
+    "id": "insight_I6",
+    "insight": "The project is currently facing a 30-day delay due to external factors like monsoon rains, requiring the development of a formal recovery plan to get back on schedule.",
+    "tags": [
+      "Project: Roads & Infrastructure for Zone 1A",
+      "Date: 20 July 2025",
+      "Event: Technical Review",
+      "Progress",
+      "Delay"
+    ]
+  },
+  {
+    "id": "insight_I5",
+    "insight": "Initial project kickoff established a clear framework for the 'Roads & Infrastructure for Zone 1A' project, including timelines, financial structures, and legal clauses.",
+    "tags": [
+      "Project: Roads & Infrastructure for Zone 1A",
+      "Date: 15 January 2025",
+      "Event: Kickoff Meeting",
+      "Finance",
+      "Legal"
+    ]
+  },
+  {
+    "id": "insight_I4",
+    "insight": "The bidding process has a clear and multi-tiered system for resolving disputes and complaints.",
+    "tags": [
+      "Project: Amaravati Capital City Development Program",
+      "Date: 31.12.2024",
+      "Document: Package - 3 (Neerukonda Reservior)",
+      "Dispute Resolution",
+      "Legal"
+    ]
+  },
+  {
+    "id": "insight_I3",
+    "insight": "There is a strong emphasis on environmental and social compliance, backed by specific requirements and penalties.",
+    "tags": [
+      "Project: Amaravati Capital City Development Program",
+      "Date: 31.12.2024",
+      "Document: Package - 3 (Neerukonda Reservior)",
+      "Environmental",
+      "Social",
+      "Compliance"
+    ]
+  },
+  {
+    "id": "insight_I2",
+    "insight": "The qualification criteria for bidders are comprehensive, focusing on financial stability, past performance, and technical capacity.",
+    "tags": [
+      "Project: Amaravati Capital City Development Program",
+      "Date: 31.12.2024",
+      "Document: Package - 3 (Neerukonda Reservior)",
+      "Qualification Criteria",
+      "Experience"
+    ]
+  },
+  {
+    "id": "insight_I1",
+    "insight": "The bidding process has strict financial and security requirements to ensure the bidder's capability and commitment.",
+    "tags": [
+      "Project: Amaravati Capital City Development Program",
+      "Date: 31.12.2024",
+      "Document: Package - 3 (Neerukonda Reservior)",
+      "Financials",
+      "Security"
+    ]
   }
 ]
 ```
@@ -165,16 +273,14 @@ class QuestionRequest(BaseModel):
     candidates: Optional[int] = 1000 # Optional: Vector search candidates
 ```
 
-#### `InsightRequest`
+#### `InsightResponse`
 ```python
-class InsightRequest(BaseModel):
-    id: str                          # Unique insight identifier
-    insight: str                     # Insight title/summary
-    detailed_answer: str             # Comprehensive answer
-    follow_up_question_1: str        # First follow-up question
-    follow_up_question_2: str        # Second follow-up question
-    follow_up_question_3: str        # Third follow-up question
-    tags: str                        # Insight tags/categories
+# Response model for listing insights
+class InsightResponse(BaseModel):
+    id: str                         # Id
+    insight: str                    # Insight
+    tags: list[str]                 # Insight tags
+
 ```
 
 ### Response Models
@@ -226,28 +332,29 @@ VECTOR_INDEX_NAME=questions_index
 
 #### `knowledge_bank` Collection
 ```json
-{
-  "_id": "ObjectId",
-  "user_question": "What is machine learning?",
-  "detailed_answer": "Comprehensive answer...",
-  "question_embedding": [0.1, 0.2, 0.3, ...], // 1536-dimensional vector
-  "follow_up_question_1": "What are ML types?",
-  "follow_up_question_2": "How does supervised learning work?",
-  "follow_up_question_3": "What are common algorithms?"
-}
+"_id":"ObjectId("68d0e1a5f87abd89b31a45a2")"
+"question_id":"Q5"
+"user_question":"What are the grounds for the forfeiture of a Bid Security?"
+"detailed_answer":"The Bid Security may be forfeited if a bidder withdraws, modifies, or …"
+"follow_up_question_1":"Can I submit a conditional bid?"
+"follow_up_question_2":"Who will pay for the cost of bidding?"
+"follow_up_question_3":"What are the common sections of a bidding document?"
+"question_embedding":Array (1536)
 ```
 
 #### `insights` Collection
 ```json
 {
-  "_id": "ObjectId",
-  "Insight ID": "insight-1",
-  "insight": "Machine Learning Fundamentals",
-  "detailed_answer": "Detailed explanation...",
-  "follow_up_question_1": "Question 1",
-  "follow_up_question_2": "Question 2", 
-  "follow_up_question_3": "Question 3",
-  "tags": "ML, AI, Technology"
+  "_id": {
+    "$oid": "68d16451d3d0872f08df4a75"
+  },
+  "Insight ID": "insight_I1",
+  "insight": "The bidding process has strict financial and security requirements to ensure the bidder's capability and commitment.",
+  "detailed_answer": "Bidders must have a strong financial position, with liquid assets of at least Rs. 58.84 Cr.\nA non-refundable bid processing fee of Rs. 20,000 and a transaction fee of 0.03% of the Estimated Contract Value (ECV) are required.\nA Bid Security, typically in the form of a bank guarantee, is mandatory. A separate **Performance Security** (2.5% of contract value) and an **E&S Performance Security** (0.1% of contract value) are required after the contract is awarded.",
+  "follow_up_question_1": "What happens if a bidder fails to provide the required Performance Security or sign the contract?",
+  "follow_up_question_2": "What are the accepted forms of Bid Security?",
+  "follow_up_question_3": "What is the purpose of the 'Performance Security'?",
+  "tags": "['Project: Amaravati Capital City Development Program', 'Date: 31.12.2024', 'Document: Package - 3 (Neerukonda Reservior)', 'Financials', 'Security']"
 }
 ```
 
@@ -255,14 +362,15 @@ VECTOR_INDEX_NAME=questions_index
 
 #### Chat History Storage
 ```
-Key: "chat_history:{session_id}"
-Type: List
-Value: JSON strings of conversation items
-Example:
-  chat_history:session-123 -> [
-    '{"session_id": "session-123", "question": "What is ML?", "answer": "ML is..."}',
-    '{"session_id": "session-123", "question": "Types of ML?", "answer": "There are..."}'
+{
+  "history": [
+    {
+      "session_id": "16054a4b-1e77-4828-b4f3-6f76db839d0e",
+      "question": "What is a C-ESMP and what does it include?",
+      "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It includes Management Strategies and Implementation Plans to address environmental and social risks of the project. It must be based on specific E&S requirements and reviewed every six months for approval before project commencement."
+    }
   ]
+}
 ```
 
 ## Installation & Setup

@@ -17,8 +17,8 @@ router = APIRouter(tags=["search"])
 class QuestionRequest(BaseModel):
     question: str
     session_id: Optional[str] = None
-    top_k: Optional[int] = 1          # optional: how many results to consider (we still answer with best one)
-    candidates: Optional[int] = 1000  # optional: numCandidates for vector search
+    # top_k: Optional[int] = 1          # optional: how many results to consider (we still answer with best one)
+    # candidates: Optional[int] = 1000  # optional: numCandidates for vector search
 
 class SearchResponse(BaseModel):
     question: str

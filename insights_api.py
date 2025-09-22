@@ -11,25 +11,12 @@ load_dotenv()
 app = FastAPI()
 router = APIRouter(prefix="/insights", tags=["insights"])
 
-class InsightRequest(BaseModel):
-    id: str
-    insight: str
-    detailed_answer: str
-    follow_up_question_1: str
-    follow_up_question_2: str
-    follow_up_question_3: str
-    tags: str
-
+# Response model for listing insights
 class InsightResponse(BaseModel):
     id: str
     insight: str
+    tags: list[str]
 
-# Add new response model for detailed insights
-class DetailedInsightResponse(BaseModel):
-    id: str
-    insight: str
-    detailed_answer: str
-    follow_up_questions: List[str]
 
 def connect_to_mongodb():
     """Connect to MongoDB and return database collection"""
@@ -43,6 +30,7 @@ def connect_to_mongodb():
         print(f"Error connecting to MongoDB: {str(e)}")
         return None, None
 
+
 # List insights  (GET /insights)
 @router.get("/", response_model=List[InsightResponse])
 async def get_insights():
@@ -51,13 +39,22 @@ async def get_insights():
         raise HTTPException(status_code=500, detail="Database connection failed")
     try:
         insights = []
-        # Sort descending so newest (by insertion) appears first
-        cursor = collection.find({}, {"Insight ID": 1, "insight": 1}).sort([("_id", -1)])
+        cursor = collection.find({}, {"Insight ID": 1, "insight": 1, "tags": 1}).sort([("_id", -1)])
+
         for doc in cursor:
+            raw_tags = doc.get("tags", "")
+            # If tags is a string that looks like a list, e.g. "['tag1', 'tag2']"
+            if isinstance(raw_tags, str) and raw_tags.startswith("[") and raw_tags.endswith("]"):
+                # Remove brackets and split by comma
+                tags = [t.strip(" '\"") for t in raw_tags[1:-1].split(",") if t.strip(" '\"")]
+            else:
+                # Otherwise, split by comma as usual
+                tags = [t.strip() for t in str(raw_tags).split(",") if t.strip()]
             insights.append(
                 InsightResponse(
                     id=doc.get("Insight ID", ""),
-                    insight=doc.get("insight", "")
+                    insight=doc.get("insight", ""),
+                    tags=tags
                 )
             )
         return insights
@@ -67,43 +64,6 @@ async def get_insights():
         mongo_client.close()
 
 
-
-# # Get one (GET /insights/{insight_id})
-# @router.get("/{insight_id}", response_model=DetailedInsightResponse)
-# async def get_insight_by_id(insight_id: str):
-#     # Connect to MongoDB
-#     mongo_client, collection = connect_to_mongodb()
-#     if mongo_client is None or collection is None:
-#         raise HTTPException(status_code=500, detail="Database connection failed")
-#     try:
-#         # Find document by Insight ID
-#         doc = collection.find_one({"Insight ID": insight_id})
-        
-#         if not doc:
-#             raise HTTPException(status_code=404, detail="Not found")
-        
-#         # Collect follow-up questions
-#         follow_ups = []
-#         for i in range(1, 4):
-#             key = f"follow_up_question_{i}"
-#             if doc.get(key):
-#                 follow_ups.append(doc[key])
-        
-#         # Return detailed insight response
-#         return DetailedInsightResponse(
-#             id=doc.get("Insight ID", ""),
-#             insight=doc.get("insight", ""),
-#             detailed_answer=doc.get("detailed_answer", ""),
-#             follow_up_questions=follow_ups
-#         )
-
-#     except HTTPException:
-#         raise
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-    
-#     finally:
-#         mongo_client.close()
 
 app.include_router(router)
 
