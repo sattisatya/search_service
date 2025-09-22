@@ -46,15 +46,13 @@ def connect_to_mongodb():
 # List insights  (GET /insights)
 @router.get("/", response_model=List[InsightResponse])
 async def get_insights():
-    # Connect to MongoDB
     mongo_client, collection = connect_to_mongodb()
     if mongo_client is None or collection is None:
         raise HTTPException(status_code=500, detail="Database connection failed")
     try:
-        # Get all insights from collection
         insights = []
-        cursor = collection.find({}, {"Insight ID": 1, "insight": 1})
-        
+        # Sort descending so newest (by insertion) appears first
+        cursor = collection.find({}, {"Insight ID": 1, "insight": 1}).sort([("_id", -1)])
         for doc in cursor:
             insights.append(
                 InsightResponse(
@@ -62,12 +60,9 @@ async def get_insights():
                     insight=doc.get("insight", "")
                 )
             )
-        
         return insights
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
     finally:
         mongo_client.close()
 
