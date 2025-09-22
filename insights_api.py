@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
 from pydantic import BaseModel
 from pymongo import MongoClient
 from typing import List
@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
+router = APIRouter(prefix="/insights", tags=["insights"])
 
 class InsightRequest(BaseModel):
     id: str
@@ -42,23 +43,25 @@ def connect_to_mongodb():
         print(f"Error connecting to MongoDB: {str(e)}")
         return None, None
 
-@app.get("/insights", response_model=List[InsightResponse])
+# List insights  (GET /insights)
+@router.get("/", response_model=List[InsightResponse])
 async def get_insights():
     # Connect to MongoDB
     mongo_client, collection = connect_to_mongodb()
     if mongo_client is None or collection is None:
         raise HTTPException(status_code=500, detail="Database connection failed")
-
     try:
         # Get all insights from collection
         insights = []
         cursor = collection.find({}, {"Insight ID": 1, "insight": 1})
         
         for doc in cursor:
-            insights.append(InsightResponse(
-                id=doc.get("Insight ID", ""),
-                insight=doc.get("insight", "")
-            ))
+            insights.append(
+                InsightResponse(
+                    id=doc.get("Insight ID", ""),
+                    insight=doc.get("insight", "")
+                )
+            )
         
         return insights
 
@@ -66,74 +69,48 @@ async def get_insights():
         raise HTTPException(status_code=500, detail=str(e))
     
     finally:
-        if mongo_client:
-            mongo_client.close()
+        mongo_client.close()
 
-@app.get("/insights", response_model=InsightResponse)
-async def create_insight(insight: InsightRequest):
-    # Connect to MongoDB
-    mongo_client, collection = connect_to_mongodb()
-    if mongo_client is None or collection is None:
-        raise HTTPException(status_code=500, detail="Database connection failed")
 
-    try:
-        # Convert insight to dictionary
-        insight_dict = insight.dict()
-        insight_dict["Insight ID"] = insight_dict.pop("id")  # Rename id field to match schema
-        
-        # Insert the document
-        result = collection.insert_one(insight_dict)
-        
-        if result.inserted_id:
-            return InsightResponse(
-                id=insight.id,
-                insight=insight.insight
-            )
-        else:
-            raise HTTPException(status_code=500, detail="Failed to insert insight")
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    finally:
-        if mongo_client:
-            mongo_client.close()
-
-@app.get("/insights/{insight_id}", response_model=DetailedInsightResponse)
+# Get one (GET /insights/{insight_id})
+@router.get("/{insight_id}", response_model=DetailedInsightResponse)
 async def get_insight_by_id(insight_id: str):
     # Connect to MongoDB
     mongo_client, collection = connect_to_mongodb()
     if mongo_client is None or collection is None:
         raise HTTPException(status_code=500, detail="Database connection failed")
-
     try:
         # Find document by Insight ID
         doc = collection.find_one({"Insight ID": insight_id})
         
         if not doc:
-            raise HTTPException(status_code=404, detail=f"Insight with ID {insight_id} not found")
+            raise HTTPException(status_code=404, detail="Not found")
         
         # Collect follow-up questions
         follow_ups = []
         for i in range(1, 4):
-            question_key = f"follow_up_question_{i}"
-            if question_key in doc and doc[question_key]:
-                follow_ups.append(doc[question_key])
+            key = f"follow_up_question_{i}"
+            if doc.get(key):
+                follow_ups.append(doc[key])
         
         # Return detailed insight response
         return DetailedInsightResponse(
-            id=doc["Insight ID"],
-            insight=doc["insight"],
-            detailed_answer=doc["detailed_answer"],
+            id=doc.get("Insight ID", ""),
+            insight=doc.get("insight", ""),
+            detailed_answer=doc.get("detailed_answer", ""),
             follow_up_questions=follow_ups
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
     finally:
-        if mongo_client:
-            mongo_client.close()
+        mongo_client.close()
+
+app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
