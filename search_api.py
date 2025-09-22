@@ -17,6 +17,8 @@ router = APIRouter(tags=["search"])
 class QuestionRequest(BaseModel):
     question: str
     session_id: Optional[str] = None
+    top_k: Optional[int] = 1          # optional: how many results to consider (we still answer with best one)
+    candidates: Optional[int] = 1000  # optional: numCandidates for vector search
 
 class SearchResponse(BaseModel):
     question: str
@@ -50,8 +52,6 @@ def get_embedding(text: str, client: OpenAI):
     except Exception:
         raise HTTPException(status_code=500, detail="Embedding failed")
 
-def cosine_similarity(a, b):
-    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
 def build_chat_context(session_id: str) -> str:
     history = redis_client.lrange(f"chat_history:{session_id}", 0, -1)
@@ -67,48 +67,81 @@ async def search_question(request: QuestionRequest):
     openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
     mongo_client, collection = connect_to_mongodb()
-    # FIX: avoid truthiness check on Collection (PyMongo forbids bool())
     if mongo_client is None or collection is None:
         raise HTTPException(status_code=500, detail="DB connection failed")
     try:
-        q_emb = get_embedding(request.question, openai_client)
-        similarities = []
-        for doc in collection.find({}):
-            emb = doc.get("question_embedding")
-            if emb:
-                similarities.append((cosine_similarity(q_emb, emb), doc))
-        if not similarities:
+        # 1. Get embedding
+        query_embedding = get_embedding(request.question, openai_client)
+
+        # 2. Vector search pipeline (MongoDB Atlas)
+        limit = request.top_k or 1
+        num_candidates = request.candidates or 1000
+        vector_index = os.getenv("VECTOR_INDEX_NAME", "questions_index")
+
+        pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": vector_index,
+                    "path": "question_embedding",
+                    "queryVector": query_embedding,
+                    "numCandidates": num_candidates,
+                    "limit": limit
+                }
+            },
+            {
+                "$addFields": {
+                    "similarity_score": {"$meta": "vectorSearchScore"}
+                }
+            },
+            {
+                "$project": {
+                    "user_question": 1,
+                    "detailed_answer": 1,
+                    "follow_up_question_1": 1,
+                    "follow_up_question_2": 1,
+                    "follow_up_question_3": 1,
+                    "similarity_score": 1
+                }
+            }
+        ]
+
+        results = list(collection.aggregate(pipeline))
+        if not results:
             raise HTTPException(status_code=404, detail="No matches")
-        similarities.sort(key=lambda x: x[0], reverse=True)
-        best = similarities[0][1]
+
+        best = results[0]
 
         follow_up_questions = []
         for i in range(1, 4):
             k = f"follow_up_question_{i}"
-            if k in best:
+            if best.get(k):
                 follow_up_questions.append(best[k])
 
+        # 3. Build context
         chat_context = build_chat_context(session_id)
+
+        # 4. LLM formatting with context + retrieved doc answer
         prompt = f"""Previous conversation:
 {chat_context}
 
 Current user question: {request.question}
 
-Relevant knowledge answer:
+Retrieved answer (context):
 {best.get('detailed_answer','')}
 
 Provide the best possible answer to the current user question using prior context if helpful. Be concise and accurate."""
         llm_resp = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role":"system","content":"Helpful technical assistant."},
-                {"role":"user","content":prompt}
+                {"role": "system", "content": "Helpful technical assistant."},
+                {"role": "user", "content": prompt}
             ],
             temperature=0.7,
             max_tokens=500
         )
         final_answer = llm_resp.choices[0].message.content.strip()
 
+        # 5. Store in Redis history (user question + final answer)
         history_item = {
             "session_id": session_id,
             "question": request.question,
@@ -123,7 +156,8 @@ Provide the best possible answer to the current user question using prior contex
             session_id=session_id
         )
     finally:
-        mongo_client.close()
+        if mongo_client:
+            mongo_client.close()
 
 @router.get("/sessions/{session_id}", response_model=HistoryResponse)
 async def get_history(session_id: str):
