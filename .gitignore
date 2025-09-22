@@ -1,0 +1,52 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+.python-version
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Excel and Data files
+*.xlsx
+*.xls
+*.xlsm
+*.xlsb
+*.csv
+*.dat
+*.db
+*.sqlite
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+*.sublime-*
+
+# Environment variables
+.env
+.env.*
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite3
+
+# Large media files
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
