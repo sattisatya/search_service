@@ -52,6 +52,32 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
     """Calculate cosine similarity between two vectors"""
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
+def format_response_with_llm(question: str, answer: str, client: OpenAI) -> str:
+    """Format the answer using OpenAI's LLM to make it more meaningful"""
+    try:
+        prompt = f"""
+        Question: {question}
+        Raw Answer: {answer}
+        
+        Please rephrase the above answer to make it more clear, concise, and well-structured. 
+        Keep the technical accuracy but make it more engaging and easier to understand.
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that rephrases technical information to make it more accessible while maintaining accuracy."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=500
+        )
+        
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error formatting response: {str(e)}")
+        return answer  # Return original answer if formatting fails
+
 @app.post("/search", response_model=SearchResponse)
 async def search_question(request: QuestionRequest):
     # Initialize OpenAI client
@@ -89,10 +115,17 @@ async def search_question(request: QuestionRequest):
             if follow_up_key in best_match:
                 follow_up_questions.append(best_match[follow_up_key])
 
-        # Prepare response with follow-up questions
+        # Format the answer using LLM
+        formatted_answer = format_response_with_llm(
+            best_match['user_question'],
+            best_match['detailed_answer'],
+            openai_client
+        )
+
+        # Prepare response with formatted answer
         response = SearchResponse(
             question=best_match['user_question'],
-            answer=best_match['detailed_answer'],
+            answer=formatted_answer,  # Use the formatted answer
             follow_up_questions=follow_up_questions
         )
 
