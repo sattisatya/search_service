@@ -82,7 +82,7 @@ Intelligent question answering with chat context.
 }
 ```
 
-#### `GET /chats/{chat_id}`
+#### `GET /chats/{chat_id}?chat_type=question/insight`
 Retrieve conversation history for a session.
 
 **Response:**
@@ -106,15 +106,76 @@ Retrieve conversation history for a session.
 }
 ```
 
-#### `GET /chats`
+#### `GET /chats?include_insight=true&include_question=true'`
 List all active session IDs.
 
 **Response:**
 ```json
-["chats-123", "chats-456", "chats-789"]
+[
+  {
+    "chat_id": "123",
+    "title": "hi"
+  },
+  {
+    "chat_id": "insight_I10",
+    "title": "The project team is leveraging both internal and external ex..."
+  },
+  {
+    "chat_id": "insight_I10",
+    "title": "The project team is leveraging both internal and external ex..."
+  },
+  {
+    "chat_id": "02274b6e-5764-4503-bb59-3fbc5796d28b",
+    "title": "Understanding C-ESMP and its components"
+  },
+  {
+    "chat_id": "53d67ea5-23e9-4356-b49c-4ffb72a8c2c7",
+    "title": "Understanding C-ESMP and its inclusions"
+  },
+  {
+    "chat_id": "baac1a5a-d8c5-43f9-9bf2-8d14ca210538",
+    "title": "Understanding C-ESMP Components"
+  },
+  {
+    "chat_id": "6fb48c17-1ce8-4fe7-bee4-adf01151b583",
+    "title": "Understanding C-ESMP Components"
+  },
+  {
+    "chat_id": "9e9b7147-cab5-4f69-b5ce-8d4d4498289b",
+    "title": "What is a C-ESMP and what does it include?"
+  },
+  {
+    "chat_id": "421c672f-2955-4823-a37d-92cbbce3b588",
+    "title": "What is a C-ESMP and what does it include?"
+  },
+  {
+    "chat_id": "99885ea7-845f-4881-8dc4-a56e36b48c0a",
+    "title": "What is a C-ESMP and what does it include?"
+  },
+  {
+    "chat_id": "cc2cc519-5060-4684-ac86-6009c6159a27",
+    "title": "What is a C-ESMP and what does it include?"
+  },
+  {
+    "chat_id": "55a278d3-3329-4734-b74e-61b62376e535",
+    "title": "What is a C-ESMP and what does it include?"
+  },
+  {
+    "chat_id": "12c29b3e-eeb8-4e89-9e47-f03100ceff46",
+    "title": "What is a C-ESMP and what does it include?"
+  },
+  {
+    "chat_id": "58c97679-b88e-423a-9489-2551fa0ab8b0",
+    "title": "What is a C-ESMP and what does it include?"
+  },
+  {
+    "chat_id": "22e9fd71-84fe-49e0-b3db-c36ebb606a81",
+    "title": "What is a C-ESMP and what does it include?"
+  }
+]
 ```
 
-#### `DELETE /chats/{chat_id}`
+#### `DELETE /chats/{chat_id}?chat_type=question/insight`
 Delete a chat and its history.
 
 **Response:**
@@ -308,8 +369,12 @@ class QuestionRequest(BaseModel):
 ```python
 # Response model for listing insights
 class InsightResponse(BaseModel):
-    id: str                         # Id
-    insight: str                    # Insight
+    id: str
+    title: str
+    updatedAt: str
+    summary: str
+    type: str
+    tags: list[str]
    
 
 ```
