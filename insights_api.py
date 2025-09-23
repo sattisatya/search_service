@@ -64,11 +64,22 @@ async def get_insights():
             updated_at = doc.get("updatedAt", datetime.utcnow().isoformat())
             
             # Create insight response
+            # Convert updatedAt to UTC ISO format if possible
+            updated_at_str = str(doc.get("updatedAt", datetime.utcnow().isoformat()))
+            try:
+                # Parse the local time string
+                local_dt = datetime.fromisoformat(updated_at_str)
+                # Convert to UTC
+                utc_dt = local_dt.astimezone(datetime.timezone.utc)
+                updated_at_utc = utc_dt.isoformat()
+            except Exception:
+                updated_at_utc = datetime.utcnow().isoformat()
+
             insights.append(
                 InsightResponse(
                     id=doc.get("Insight ID", ""),
                     title=doc.get("title", doc.get("insight", "")[:50] + "..."),
-                    updatedAt=updated_at,
+                    updatedAt=updated_at_utc,
                     summary=doc.get("insight", ""),
                     type=doc.get("type", "DOCUMENT"),
                     tags=tags[:4]  # Limit to 4 tags

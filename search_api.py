@@ -5,6 +5,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from typing import List, Optional, Literal
 import os, uuid, json, redis, numpy as np, time, re
+from datetime import datetime, timezone
 
 load_dotenv()
 
@@ -13,6 +14,9 @@ redis_port = int(os.getenv("REDIS_PORT", 6379))
 redis_client = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
 router = APIRouter(tags=["search"])
+
+def iso_utc_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 # ------------------ MODELS ------------------
 
@@ -32,7 +36,7 @@ class SearchResponse(BaseModel):
 class HistoryItem(BaseModel):
     question: str
     answer: str
-    ts: Optional[int] = None  # unix timestamp (user_id removed from each item)
+    ts: Optional[str] = None  # CHANGED: store UTC ISO string
 
 class HistoryResponse(BaseModel):
     chat_id: str
@@ -201,7 +205,7 @@ Provide the best possible answer using prior context if helpful. Be concise and 
         item = {
             "question": request.question,
             "answer": final_answer,
-            "ts": int(time.time())
+            "ts": iso_utc_now()   # CHANGED: was int(time.time())
         }
         redis_client.rpush(list_key, json.dumps(item))
 
@@ -211,7 +215,11 @@ Provide the best possible answer using prior context if helpful. Be concise and 
 
         if is_first_message:
             title = generate_chat_title(openai_client, request.question)
-            meta = {"title": title, "created": int(time.time()), "user_id": "admin"}
+            meta = {
+                "title": title,
+                "created": iso_utc_now(),   # CHANGED: was int(time.time())
+                "user_id": "admin"
+            }
             redis_client.set(meta_key, json.dumps(meta))
         else:
             meta_raw = redis_client.get(meta_key)
@@ -219,6 +227,9 @@ Provide the best possible answer using prior context if helpful. Be concise and 
             if meta_raw:
                 try:
                     meta = json.loads(meta_raw)
+                    # Normalize legacy int created -> ISO
+                    if isinstance(meta.get("created"), (int, float)):
+                        meta["created"] = iso_utc_now()
                     title = meta.get("title")
                 except Exception:
                     meta = {}
@@ -234,16 +245,18 @@ Provide the best possible answer using prior context if helpful. Be concise and 
                         title = "Conversation"
                 else:
                     title = "Conversation"
-                # Persist missing meta
                 meta.setdefault("user_id", "admin")
                 meta["title"] = title
-                meta.setdefault("created", int(time.time()))
+                meta.setdefault("created", iso_utc_now())  # CHANGED
                 redis_client.set(meta_key, json.dumps(meta))
             else:
-                # Ensure user_id exists for backward compatibility
                 if "user_id" not in meta:
                     meta["user_id"] = "admin"
-                    redis_client.set(meta_key, json.dumps(meta))
+                if "created" not in meta:
+                    meta["created"] = iso_utc_now()
+                elif isinstance(meta.get("created"), (int, float)):
+                    meta["created"] = iso_utc_now()
+                redis_client.set(meta_key, json.dumps(meta))
 
         return SearchResponse(
             question=request.question,
@@ -291,15 +304,18 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
             if "user_id" in data and user_id == "admin":
                 user_id = data["user_id"]
             data.pop("user_id", None)
+
+            # Normalize legacy numeric ts -> ISO
+            if isinstance(data.get("ts"), (int, float)):
+                data["ts"] = iso_utc_now()
             history_items.append(HistoryItem(**data))
         except Exception:
             continue
 
-    # Persist back filled title/user_id if meta missing
     if not meta_raw:
         meta_save = {
             "title": chat_title or "Conversation",
-            "created": int(time.time()),
+            "created": iso_utc_now(),  # CHANGED: ensure ISO string
             "user_id": user_id
         }
         redis_client.set(chat_meta_key(chat_id, chat_type), json.dumps(meta_save))
@@ -348,14 +364,32 @@ async def list_chats(include_insight: bool = True, include_question: bool = True
     items.sort(key=lambda x: x.title.lower())
     return items
 
-
 @router.delete("/chats/{chat_id}")
 async def delete_session(chat_id: str, chat_type: Optional[Literal["question","insight"]] = None):
-    deleted = 0
+    """
+    Delete chat history (messages) and its meta (title, user_id, created).
+    If chat_type is provided, only that type is removed; otherwise both.
+    """
+    deleted_lists = 0
+    deleted_meta = 0
+
+    # QUESTION
     if chat_type in (None, "question"):
-        deleted += redis_client.delete(redis_key(chat_id, "question"))
+        deleted_lists += redis_client.delete(redis_key(chat_id, "question"))
+        deleted_meta += redis_client.delete(chat_meta_key(chat_id, "question"))
+
+    # INSIGHT
     if chat_type in (None, "insight"):
-        deleted += redis_client.delete(redis_key(chat_id, "insight"))
-    if deleted == 0:
+        deleted_lists += redis_client.delete(redis_key(chat_id, "insight"))
+        deleted_meta += redis_client.delete(chat_meta_key(chat_id, "insight"))
+
+    if (deleted_lists + deleted_meta) == 0:
         raise HTTPException(status_code=404, detail="Not found")
-    return {"detail": "Deleted", "chat_id": chat_id, "segments_deleted": deleted}
+
+    return {
+        "detail": "Deleted",
+        "chat_id": chat_id,
+        "chat_type": chat_type,
+        "message_lists_deleted": deleted_lists,
+        "meta_keys_deleted": deleted_meta
+    }

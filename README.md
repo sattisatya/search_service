@@ -88,19 +88,20 @@ Retrieve conversation history for a session.
 **Response:**
 ```json
 {
-  "chat_id": "e856228f-64cd-42e4-9463-1d2f8cf3d132",
-  "chat_type": "question",
+  "chat_id": "insight_I10",
+  "chat_type": "insight",
   "user_id": "admin",
+  "chat_title": "Leveraging Internal and External Expertise for Challenges",
   "history": [
     {
-      "question": "What is a C-ESMP and what does it include?",
-      "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It comprises Management Strategies and Implementation Plans (MSIPs) to address environmental and social risks and impacts of a project. The plan must adhere to specific E&S requirements outlined in Appendices I and II of Part VI, reviewed every six months, and approved by the Project Management Consultant (PMC) and Employer before work can begin.",
-      "ts": 1758619735
+      "question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
+      "answer": "The project team is effectively utilizing internal and external expertise to address challenges, fostering a collaborative problem-solving approach while maintaining quality control through unbiased third-party assessments and engaging multiple stakeholders for comprehensive project consideration.",
+      "ts": "2025-09-23T15:08:06Z"
     },
     {
-      "question": "What additional documents must a bidder submit?",
-      "answer": "In addition to the Technical Proposal, bidders must submit an Outline Quality Control & Assurance Plan, an Outline Social, Safety, Health, and Environment Plan, Management Strategies and Implementation Plans (MSIPs), a Programme for execution of Work, a Logistic Plan, an Organization Chart, a plan for deploying Plant & Machinery, a plan for procurement of key materials, and a plan for engaging specialized agencies for specific work components.",
-      "ts": 1758619791
+      "question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
+      "answer": "The project team is effectively leveraging both internal and external expertise to address challenges, promoting a collaborative problem-solving approach while ensuring quality control through unbiased third-party assessments and engaging multiple stakeholders for comprehensive project consideration. Internal teams like the Chief Engineer's office collaborate with external parties, such as the Project Supervision Consultant, to address schedule slippage. Third-party consultants provide unbiased quality reports before milestone payments, and discussions include stakeholders like the Commissioner, Chief Engineer, Finance Officer, and Legal Advisor to consider all project aspects.",
+      "ts": "2025-09-23T15:07:58Z"
     }
   ]
 }
@@ -198,7 +199,7 @@ List all insights (newest first).
   {
     "id": "insight_I10",
     "title": "Internal and External Teams Drive Quality Solutions",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
     "type": "MEETING",
     "tags": [
@@ -211,7 +212,7 @@ List all insights (newest first).
   {
     "id": "insight_I9",
     "title": "Contractor Over-Dependence Poses Project Risk",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "A significant risk of 'contractor over-dependence' has been identified, as the current contractor holds three other CRDA contracts, necessitating a new monitoring protocol.",
     "type": "MEETING",
     "tags": [
@@ -224,7 +225,7 @@ List all insights (newest first).
   {
     "id": "insight_I8",
     "title": "Performance-Based Payments Linked to Verification",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "The projectâ€™s payment process is tied directly to performance and external verification, indicating a strong focus on quality assurance before financial disbursements.",
     "type": "MEETING",
     "tags": [
@@ -237,7 +238,7 @@ List all insights (newest first).
   {
     "id": "insight_I7",
     "title": "Dust Suppression Identified as Urgent Concern",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "Environmental compliance, particularly regarding dust suppression, has been identified as a key area of concern that requires immediate action and a formal audit.",
     "type": "MEETING",
     "tags": [
@@ -250,7 +251,7 @@ List all insights (newest first).
   {
     "id": "insight_I6",
     "title": "Monsoon Delay Requires Formal Recovery Planning",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "The project is currently facing a 30-day delay due to external factors like monsoon rains, requiring the development of a formal recovery plan to get back on schedule.",
     "type": "MEETING",
     "tags": [
@@ -263,7 +264,7 @@ List all insights (newest first).
   {
     "id": "insight_I5",
     "title": "Project Kickoff Defines Legal and Financial Framework",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "Initial project kickoff established a clear framework for the 'Roads & Infrastructure for Zone 1A' project, including timelines, financial structures, and legal clauses.",
     "type": "DOCUMENT",
     "tags": [
@@ -276,7 +277,7 @@ List all insights (newest first).
   {
     "id": "insight_I4",
     "title": "Multi-Tiered System for Dispute Resolution",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "The bidding process has a clear and multi-tiered system for resolving disputes and complaints.",
     "type": "DOCUMENT",
     "tags": [
@@ -289,7 +290,7 @@ List all insights (newest first).
   {
     "id": "insight_I3",
     "title": "Strong Emphasis on Environmental and Social Compliance",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "There is a strong emphasis on environmental and social compliance, backed by specific requirements and penalties.",
     "type": "DOCUMENT",
     "tags": [
@@ -302,7 +303,7 @@ List all insights (newest first).
   {
     "id": "insight_I2",
     "title": "Comprehensive Criteria Focus on Bidder Capability",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "The qualification criteria for bidders are comprehensive, focusing on financial stability, past performance, and technical capacity.",
     "type": "DOCUMENT",
     "tags": [
@@ -315,7 +316,7 @@ List all insights (newest first).
   {
     "id": "insight_I1",
     "title": "Strict Bidding Process Ensures Bidder Credibility",
-    "updatedAt": "2025-09-23T04:43:37.621828",
+    "updatedAt": "2025-09-23T15:03:28.351256",
     "summary": "The bidding process has strict financial and security requirements to ensure the bidder's capability and commitment.",
     "type": "DOCUMENT",
     "tags": [
