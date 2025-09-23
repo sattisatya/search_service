@@ -55,60 +55,71 @@ FastAPI application that combines both APIs into a unified service.
 ### Search Endpoints
 
 #### `POST /search`
-Intelligent question answering with session context.
+Intelligent question answering with chat context.
 
 **Request:**
 ```json
 {
   "question": "What is a C-ESMP and what does it include?",
-  "session_id": "optional-session-id"
+  "chat_type": "question",
+  "chat_id": "optional-chat-id"
 }
 ```
 
 **Response:**
 ```json
 {
-    "question": "What is a C-ESMP and what does it include?",
-    "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It includes Management Strategies and Implementation Plans to manage environmental and social risks and impacts of the project, based on specific requirements. It must be reviewed every six months and approved before work can commence.",
-    "follow_up_questions": [
-        "What additional documents must a bidder submit?",
-        "What is the purpose of the 'Performance Security'?",
-        "What is the 'Letter of Acceptance'?"
-    ],
-    "session_id": "4523cde3-712e-43c5-93c7-f424f7922e15"
+  "question": "What additional documents must a bidder submit?",
+  "answer": "In addition to the Technical Proposal, bidders must submit an Outline Quality Control & Assurance Plan, an Outline Social, Safety, Health, and Environment Plan, Management Strategies and Implementation Plans (MSIPs), a Programme for execution of Work, a Logistic Plan, an Organization Chart, a plan for deploying Plant & Machinery, a plan for procurement of key materials, and a plan for engaging specialized agencies for specific work components.",
+  "follow_up_questions": [
+    "What is a C-ESMP and what does it include?",
+    "How is the bid evaluated?",
+    "What are the rules regarding the use of bidding forms?"
+  ],
+  "chat_id": "e856228f-64cd-42e4-9463-1d2f8cf3d132",
+  "chat_type": "question",
+  "title": "Understanding C-ESMP and its inclusions"
 }
 ```
 
-#### `GET /session_id/{session_id}`
+#### `GET /chats/{chat_id}`
 Retrieve conversation history for a session.
 
 **Response:**
 ```json
 {
+  "chat_id": "e856228f-64cd-42e4-9463-1d2f8cf3d132",
+  "chat_type": "question",
+  "user_id": "admin",
   "history": [
     {
-      "session_id": "16054a4b-1e77-4828-b4f3-6f76db839d0e",
       "question": "What is a C-ESMP and what does it include?",
-      "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It includes Management Strategies and Implementation Plans to address environmental and social risks of the project. It must be based on specific E&S requirements and reviewed every six months for approval before project commencement."
+      "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It comprises Management Strategies and Implementation Plans (MSIPs) to address environmental and social risks and impacts of a project. The plan must adhere to specific E&S requirements outlined in Appendices I and II of Part VI, reviewed every six months, and approved by the Project Management Consultant (PMC) and Employer before work can begin.",
+      "ts": 1758619735
+    },
+    {
+      "question": "What additional documents must a bidder submit?",
+      "answer": "In addition to the Technical Proposal, bidders must submit an Outline Quality Control & Assurance Plan, an Outline Social, Safety, Health, and Environment Plan, Management Strategies and Implementation Plans (MSIPs), a Programme for execution of Work, a Logistic Plan, an Organization Chart, a plan for deploying Plant & Machinery, a plan for procurement of key materials, and a plan for engaging specialized agencies for specific work components.",
+      "ts": 1758619791
     }
   ]
 }
 ```
 
-#### `GET /sessions`
+#### `GET /chats`
 List all active session IDs.
 
 **Response:**
 ```json
-["session-123", "session-456", "session-789"]
+["chats-123", "chats-456", "chats-789"]
 ```
 
-#### `DELETE /sessions/{session_id}`
-Delete a session and its history.
+#### `DELETE /chats/{chat_id}`
+Delete a chat and its history.
 
 **Response:**
 ```json
-{"detail": "Session session-123 deleted."}
+{"detail": "Chat chat-123 deleted."}
 ```
 
 ### Insights Endpoints
@@ -121,114 +132,132 @@ List all insights (newest first).
 [
   {
     "id": "insight_I10",
-    "insight": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
+    "title": "Internal and External Teams Drive Quality Solutions",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
+    "type": "MEETING",
     "tags": [
-      "Project: Roads & Infrastructure for Zone 1A",
-      "Date: All Meetings",
+      "Roads & Infrastructure for Zone 1A",
+      "All Meetings",
       "Event: Multi-Meeting Insights",
-      "Collaboration",
-      "Quality Control",
-      "Stakeholder Management"
+      "Collaboration"
     ]
   },
   {
     "id": "insight_I9",
-    "insight": "A significant risk of 'contractor over-dependence' has been identified, as the current contractor holds three other CRDA contracts, necessitating a new monitoring protocol.",
+    "title": "Contractor Over-Dependence Poses Project Risk",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "A significant risk of 'contractor over-dependence' has been identified, as the current contractor holds three other CRDA contracts, necessitating a new monitoring protocol.",
+    "type": "MEETING",
     "tags": [
-      "Project: Roads & Infrastructure for Zone 1A",
-      "Date: 10 December 2025",
+      "Roads & Infrastructure for Zone 1A",
+      "10 December 2025",
       "Event: Finance & Risk Review",
-      "Risk Management",
-      "Contractor Over-commitment"
+      "Risk Management"
     ]
   },
   {
     "id": "insight_I8",
-    "insight": "The projectâ€™s payment process is tied directly to performance and external verification, indicating a strong focus on quality assurance before financial disbursements.",
+    "title": "Performance-Based Payments Linked to Verification",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "The projectâ€™s payment process is tied directly to performance and external verification, indicating a strong focus on quality assurance before financial disbursements.",
+    "type": "MEETING",
     "tags": [
-      "Project: Roads & Infrastructure for Zone 1A",
-      "Date: 10 December 2025",
+      "Roads & Infrastructure for Zone 1A",
+      "10 December 2025",
       "Event: Finance & Risk Review",
-      "Payments",
-      "Quality Control"
+      "Payments"
     ]
   },
   {
     "id": "insight_I7",
-    "insight": "Environmental compliance, particularly regarding dust suppression, has been identified as a key area of concern that requires immediate action and a formal audit.",
+    "title": "Dust Suppression Identified as Urgent Concern",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "Environmental compliance, particularly regarding dust suppression, has been identified as a key area of concern that requires immediate action and a formal audit.",
+    "type": "MEETING",
     "tags": [
-      "Project: Roads & Infrastructure for Zone 1A",
-      "Date: 20 July 2025",
+      "Roads & Infrastructure for Zone 1A",
+      "20 July 2025",
       "Event: Technical Review",
-      "Environmental Compliance",
-      "Dust Suppression"
+      "Environmental Compliance"
     ]
   },
   {
     "id": "insight_I6",
-    "insight": "The project is currently facing a 30-day delay due to external factors like monsoon rains, requiring the development of a formal recovery plan to get back on schedule.",
+    "title": "Monsoon Delay Requires Formal Recovery Planning",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "The project is currently facing a 30-day delay due to external factors like monsoon rains, requiring the development of a formal recovery plan to get back on schedule.",
+    "type": "MEETING",
     "tags": [
-      "Project: Roads & Infrastructure for Zone 1A",
-      "Date: 20 July 2025",
+      "Roads & Infrastructure for Zone 1A",
+      "20 July 2025",
       "Event: Technical Review",
-      "Progress",
-      "Delay"
+      "Progress"
     ]
   },
   {
     "id": "insight_I5",
-    "insight": "Initial project kickoff established a clear framework for the 'Roads & Infrastructure for Zone 1A' project, including timelines, financial structures, and legal clauses.",
+    "title": "Project Kickoff Defines Legal and Financial Framework",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "Initial project kickoff established a clear framework for the 'Roads & Infrastructure for Zone 1A' project, including timelines, financial structures, and legal clauses.",
+    "type": "DOCUMENT",
     "tags": [
-      "Project: Roads & Infrastructure for Zone 1A",
-      "Date: 15 January 2025",
+      "Roads & Infrastructure for Zone 1A",
+      "15 January 2025",
       "Event: Kickoff Meeting",
-      "Finance",
-      "Legal"
+      "Finance"
     ]
   },
   {
     "id": "insight_I4",
-    "insight": "The bidding process has a clear and multi-tiered system for resolving disputes and complaints.",
+    "title": "Multi-Tiered System for Dispute Resolution",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "The bidding process has a clear and multi-tiered system for resolving disputes and complaints.",
+    "type": "DOCUMENT",
     "tags": [
-      "Project: Amaravati Capital City Development Program",
-      "Date: 31.12.2024",
+      "Amaravati Capital City Development Program",
+      "31 December 2024",
       "Document: Package - 3 (Neerukonda Reservior)",
-      "Dispute Resolution",
-      "Legal"
+      "Dispute Resolution"
     ]
   },
   {
     "id": "insight_I3",
-    "insight": "There is a strong emphasis on environmental and social compliance, backed by specific requirements and penalties.",
+    "title": "Strong Emphasis on Environmental and Social Compliance",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "There is a strong emphasis on environmental and social compliance, backed by specific requirements and penalties.",
+    "type": "DOCUMENT",
     "tags": [
-      "Project: Amaravati Capital City Development Program",
-      "Date: 31.12.2024",
+      "Amaravati Capital City Development Program",
+      "31 December 2024",
       "Document: Package - 3 (Neerukonda Reservior)",
-      "Environmental",
-      "Social",
-      "Compliance"
+      "Environmental"
     ]
   },
   {
     "id": "insight_I2",
-    "insight": "The qualification criteria for bidders are comprehensive, focusing on financial stability, past performance, and technical capacity.",
+    "title": "Comprehensive Criteria Focus on Bidder Capability",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "The qualification criteria for bidders are comprehensive, focusing on financial stability, past performance, and technical capacity.",
+    "type": "DOCUMENT",
     "tags": [
-      "Project: Amaravati Capital City Development Program",
-      "Date: 31.12.2024",
+      "Amaravati Capital City Development Program",
+      "31 December 2024",
       "Document: Package - 3 (Neerukonda Reservior)",
-      "Qualification Criteria",
-      "Experience"
+      "Qualification Criteria"
     ]
   },
   {
     "id": "insight_I1",
-    "insight": "The bidding process has strict financial and security requirements to ensure the bidder's capability and commitment.",
+    "title": "Strict Bidding Process Ensures Bidder Credibility",
+    "updatedAt": "2025-09-23T04:43:37.621828",
+    "summary": "The bidding process has strict financial and security requirements to ensure the bidder's capability and commitment.",
+    "type": "DOCUMENT",
     "tags": [
-      "Project: Amaravati Capital City Development Program",
-      "Date: 31.12.2024",
+      "Amaravati Capital City Development Program",
+      "31 December 2024",
       "Document: Package - 3 (Neerukonda Reservior)",
-      "Financials",
-      "Security"
+      "Financials"
     ]
   }
 ]
@@ -241,7 +270,8 @@ Get detailed insight by ID.
 ```json
 {
 "question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
-"session_id": "optional-session-id"
+"chat_type":"insight",
+"chat_id": "insight_id"
 
 }
 ```
@@ -249,14 +279,16 @@ Get detailed insight by ID.
 **Response:**
 ```json
 {
-    "question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
-    "answer": "The project team's collaborative approach includes utilizing internal teams like the Chief Engineer's office and external parties like the Project Supervision Consultant to address challenges and ensure quality control. Multiple stakeholders, including the Commissioner, Chief Engineer, Finance Officer, and Legal Advisor, are involved in discussions to consider all aspects of the project.",
-    "follow_up_questions": [
-        "Who are the key external parties involved in the project?",
-        "How does the project ensure compliance with quality standards?",
-        "What is the final authority on decisions regarding project timelines and penalties?"
-    ],
-    "session_id": "908d2587-72f7-4499-8f5d-fdb343e79047"
+  "question": "What additional documents must a bidder submit?",
+  "answer": "Based on the prior context provided, in addition to the documents mentioned, bidders must also submit a plan detailing their engagement of specialized agencies for specific work components.",
+  "follow_up_questions": [
+    "What is a C-ESMP and what does it include?",
+    "How is the bid evaluated?",
+    "What are the rules regarding the use of bidding forms?"
+  ],
+  "chat_id": "insight_I10",
+  "chat_type": "insight",
+  "title": "Leveraging Internal and External Expertise for Challenges"
 }
 ```
 
@@ -267,8 +299,9 @@ Get detailed insight by ID.
 #### `QuestionRequest`
 ```python
 class QuestionRequest(BaseModel):
-    question: str                    # Required: User's question
-    session_id: Optional[str] = None # Optional: Session ID (auto-generated if not provided)
+    question: str
+    chat_id: Optional[str] = None # Optional: Session ID (auto-generated if not provided)
+    chat_type: Literal["question", "insight"] = "question" 
 ```
 
 #### `InsightResponse`
@@ -277,7 +310,7 @@ class QuestionRequest(BaseModel):
 class InsightResponse(BaseModel):
     id: str                         # Id
     insight: str                    # Insight
-    tags: list[str]                 # Insight tags
+   
 
 ```
 
@@ -286,21 +319,28 @@ class InsightResponse(BaseModel):
 #### `SearchResponse`
 ```python
 class SearchResponse(BaseModel):
-    question: str                    # Original user question
-    answer: str                      # LLM-generated answer
-    follow_up_questions: List[str]   # Suggested follow-up questions
-    session_id: str                  # Session identifier
+    question: str
+    answer: str
+    follow_up_questions: List[str]
+    chat_id: str                  # NEW (returned only when created)
+    chat_type: Literal["question", "insight"]
+    title: Optional[str] = None   # NEW (returned only when created)
 ```
 
 #### `HistoryResponse`
 ```python
 class HistoryResponse(BaseModel):
-    history: List[HistoryItem]       # List of conversation items
+    chat_id: str
+    chat_type: Literal["question", "insight"]
+    user_id: str
+    chat_title: Optional[str] = None          # NEW: title outside the list
+    history: List[HistoryItem]
+
 
 class HistoryItem(BaseModel):
-    session_id: str                  # Session identifier
-    question: str                    # User's question
-    answer: str                      # System's answer
+    question: str
+    answer: str
+    ts: Optional[int] = None  # unix timestamp (user_id removed from each item)
 ```
 
 ## Environment Variables
@@ -363,7 +403,7 @@ VECTOR_INDEX_NAME=questions_index
 {
   "history": [
     {
-      "session_id": "16054a4b-1e77-4828-b4f3-6f76db839d0e",
+      "chat_id": "16054a4b-1e77-4828-b4f3-6f76db839d0e",
       "question": "What is a C-ESMP and what does it include?",
       "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It includes Management Strategies and Implementation Plans to address environmental and social risks of the project. It must be based on specific E&S requirements and reviewed every six months for approval before project commencement."
     }
@@ -455,13 +495,13 @@ curl -X POST "http://localhost:8000/search" \
   -d '{"question": "What is machine learning?"}'
 
 # Get conversation history
-curl -X GET "http://localhost:8000/history/session-123"
+curl -X GET "http://localhost:8000/chat/chat-123"
 
 # List all sessions
-curl -X GET "http://localhost:8000/sessions"
+curl -X GET "http://localhost:8000/chats"
 
 # Delete a session
-curl -X DELETE "http://localhost:8000/sessions/session-123"
+curl -X DELETE "http://localhost:8000/chats/chat-123"
 
 # List insights
 curl -X GET "http://localhost:8000/insights/"
@@ -598,5 +638,5 @@ For support and questions:
 
 ---
 
-**Version**: 1.0.0  
+**Version**: 1.0.0
 **Last Updated**: September 2025
