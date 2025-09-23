@@ -453,7 +453,7 @@ VECTOR_INDEX_NAME=questions_index
 ```json
 {
   "_id": {
-    "$oid": "68d16451d3d0872f08df4a75"
+    "$oid": "68d2257948c95f14c746e51c"
   },
   "Insight ID": "insight_I1",
   "insight": "The bidding process has strict financial and security requirements to ensure the bidder's capability and commitment.",
@@ -461,7 +461,10 @@ VECTOR_INDEX_NAME=questions_index
   "follow_up_question_1": "What happens if a bidder fails to provide the required Performance Security or sign the contract?",
   "follow_up_question_2": "What are the accepted forms of Bid Security?",
   "follow_up_question_3": "What is the purpose of the 'Performance Security'?",
-  "tags": "['Project: Amaravati Capital City Development Program', 'Date: 31.12.2024', 'Document: Package - 3 (Neerukonda Reservior)', 'Financials', 'Security']"
+  "tags": "[Amaravati Capital City Development Program', '31 December 2024', 'Document: Package - 3 (Neerukonda Reservior)', 'Financials', 'Security']",
+  "title": "Strict Bidding Process Ensures Bidder Credibility",
+  "type": "DOCUMENT",
+  "updatedAt": "2025-09-23T04:43:37.621828"
 }
 ```
 
