@@ -180,7 +180,11 @@ Delete a chat and its history.
 
 **Response:**
 ```json
-{"detail": "Chat chat-123 deleted."}
+{
+  "detail": "Deleted",
+  "chat_id": "99885ea7-845f-4881-8dc4-a56e36b48c0a",
+  "segments_deleted": 1
+}
 ```
 
 ### Insights Endpoints
@@ -466,11 +470,15 @@ VECTOR_INDEX_NAME=questions_index
 #### Chat History Storage
 ```
 {
+  "chat_id": "53d67ea5-23e9-4356-b49c-4ffb72a8c2c7",
+  "chat_type": "question",
+  "user_id": "admin",
+  "chat_title": "Understanding C-ESMP and its inclusions",
   "history": [
     {
-      "chat_id": "16054a4b-1e77-4828-b4f3-6f76db839d0e",
       "question": "What is a C-ESMP and what does it include?",
-      "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It includes Management Strategies and Implementation Plans to address environmental and social risks of the project. It must be based on specific E&S requirements and reviewed every six months for approval before project commencement."
+      "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It consists of Management Strategies and Implementation Plans (MSIPs) to manage environmental and social risks and impacts of a project. It must comply with specific E&S requirements, be reviewed every six months, and approved by the PMC and Employer before project commencement.",
+      "ts": 1758616706
     }
   ]
 }
