@@ -55,6 +55,8 @@ class ChatSummary(BaseModel):
 class ChatListItem(BaseModel):
     chat_id: str
     title: str
+    last_answer: Optional[str] = None        # NEW: latest answer text
+    timestamp: Optional[str] = None          # NEW: ISO UTC timestamp of latest message (or meta created)
 
 # ------------------ HELPERS ------------------
 
@@ -126,6 +128,68 @@ Return only the title, no quotes, no punctuation at end.
         return title
     except Exception:
         return "Conversation"
+
+# ------------------ ORDERING (NEW: Redis Sorted Set) ------------------
+CHAT_ORDER_ZSET = "chat:order"  # member format: "<chat_type>:<chat_id>"
+
+def chat_order_member(chat_type: str, chat_id: str) -> str:
+    return f"{chat_type}:{chat_id}"
+
+def update_chat_order(chat_type: str, chat_id: str):
+    """
+    Store/update chat recency using a Redis sorted set scored by epoch seconds.
+    Guarantees deterministic newest-first ordering.
+    """
+    try:
+        redis_client.zadd(CHAT_ORDER_ZSET, {chat_order_member(chat_type, chat_id): time.time()})
+    except Exception:
+        # Fallback: ignore ordering failure
+        pass
+
+def remove_chat_order_member(chat_id: str, chat_type: Optional[str] = None):
+    """
+    Remove one or both members from the chat:order sorted set.
+    If chat_type is None, remove both possible variants.
+    """
+    try:
+        if chat_type:
+            redis_client.zrem(CHAT_ORDER_ZSET, chat_order_member(chat_type, chat_id))
+        else:
+            redis_client.zrem(
+                CHAT_ORDER_ZSET,
+                chat_order_member("question", chat_id),
+                chat_order_member("insight", chat_id),
+            )
+    except Exception:
+        pass
+
+# (Optional) prune orphaned zset members (used inside list endpoint)
+def is_orphan(chat_type: str, chat_id: str) -> bool:
+    return (
+        not redis_client.exists(redis_key(chat_id, chat_type))
+        and not redis_client.exists(chat_meta_key(chat_id, chat_type))
+    )
+
+def get_last_answer(chat_type: str, chat_id: str) -> Optional[str]:
+    try:
+        last_raw = redis_client.lindex(redis_key(chat_id, chat_type), -1)
+        if last_raw:
+            obj = json.loads(last_raw)
+            return obj.get("answer")
+    except Exception:
+        pass
+    return None
+
+def to_iso(val) -> str:
+    if isinstance(val, (int, float)):
+        return datetime.fromtimestamp(val, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    if isinstance(val, str):
+        try:
+            datetime.strptime(val, "%Y-%m-%dT%H:%M:%SZ")
+            return val
+        except Exception:
+            return iso_utc_now()
+    return iso_utc_now()
 
 # ------------------ ENDPOINTS ------------------
 
@@ -201,38 +265,26 @@ Provide the best possible answer using prior context if helpful. Be concise and 
         list_key = redis_key(chat_id, chat_type)
         is_first_message = redis_client.llen(list_key) == 0
 
-        # Store item WITHOUT user_id now
         item = {
             "question": request.question,
             "answer": final_answer,
-            "ts": iso_utc_now()   # CHANGED: was int(time.time())
+            "ts": iso_utc_now()
         }
         redis_client.rpush(list_key, json.dumps(item))
 
-        # ALWAYS provide a title in the response
-        title = None
         meta_key = chat_meta_key(chat_id, chat_type)
-
+        title = None
         if is_first_message:
             title = generate_chat_title(openai_client, request.question)
-            meta = {
-                "title": title,
-                "created": iso_utc_now(),   # CHANGED: was int(time.time())
-                "user_id": "admin"
-            }
-            redis_client.set(meta_key, json.dumps(meta))
         else:
-            meta_raw = redis_client.get(meta_key)
-            meta = {}
-            if meta_raw:
+            # Try existing title
+            existing = redis_client.get(meta_key)
+            if existing:
                 try:
-                    meta = json.loads(meta_raw)
-                    # Normalize legacy int created -> ISO
-                    if isinstance(meta.get("created"), (int, float)):
-                        meta["created"] = iso_utc_now()
-                    title = meta.get("title")
+                    existing_meta = json.loads(existing)
+                    title = existing_meta.get("title")
                 except Exception:
-                    meta = {}
+                    pass
             if not title:
                 # Fallback derive from first message
                 first_raw = redis_client.lindex(list_key, 0)
@@ -240,23 +292,14 @@ Provide the best possible answer using prior context if helpful. Be concise and 
                     try:
                         first = json.loads(first_raw)
                         q = first.get("question", "").strip()
-                        title = (q[:60] + "...") if len(q) > 60 else q or "Conversation"
+                        title = (q[:60] + "...") if q and len(q) > 60 else (q or "Conversation")
                     except Exception:
                         title = "Conversation"
                 else:
                     title = "Conversation"
-                meta.setdefault("user_id", "admin")
-                meta["title"] = title
-                meta.setdefault("created", iso_utc_now())  # CHANGED
-                redis_client.set(meta_key, json.dumps(meta))
-            else:
-                if "user_id" not in meta:
-                    meta["user_id"] = "admin"
-                if "created" not in meta:
-                    meta["created"] = iso_utc_now()
-                elif isinstance(meta.get("created"), (int, float)):
-                    meta["created"] = iso_utc_now()
-                redis_client.set(meta_key, json.dumps(meta))
+
+        update_chat_meta_on_message(chat_id, chat_type, title)
+        update_chat_order(chat_type, chat_id)   # NEW: recency tracking
 
         return SearchResponse(
             question=request.question,
@@ -328,62 +371,178 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
         history=history_items
     )
 
-@router.get("/chats", response_model=List[ChatListItem])
-async def list_chats(include_insight: bool = True, include_question: bool = True):
-    items: List[ChatListItem] = []
-    types: List[str] = []
-    if include_question:
-        types.append("question")
-    if include_insight:
-        types.append("insight")
 
-    for t in types:
-        for key in redis_client.keys(f"chat:{t}:*"):
-            chat_id = key.split(f"chat:{t}:")[1]
-            # Try meta title
-            meta_raw = redis_client.get(chat_meta_key(chat_id, t))
-            title = None
-            if meta_raw:
+def update_chat_meta_on_message(chat_id: str, chat_type: str, title: Optional[str] = None):
+    """
+    Update (or create) chat meta:
+      - created: first creation time (kept immutable)
+      - last_activity: updated every message
+      - title: only set/updated if provided (else preserved)
+      - user_id: fixed 'admin' for now
+    """
+    key = chat_meta_key(chat_id, chat_type)
+    now_iso = iso_utc_now()
+    meta = {}
+    raw = redis_client.get(key)
+    if raw:
+        try:
+            meta = json.loads(raw)
+        except Exception:
+            meta = {}
+    # Keep original created
+    if "created" not in meta:
+        meta["created"] = now_iso
+    # Always update last_activity
+    meta["last_activity"] = now_iso
+    # Title logic
+    if title:
+        meta["title"] = title
+    else:
+        meta.setdefault("title", "Conversation")
+    meta.setdefault("user_id", "admin")
+    redis_client.set(key, json.dumps(meta))
+    return meta
+
+
+@router.get("/chats", response_model=List[ChatListItem])
+async def list_chats(
+    include_insight: bool = True,
+    include_question: bool = True
+):
+    """
+    Deterministic newest-first list using a Redis sorted set.
+    Only top 'answer_expose_limit' items include last_answer.
+    """
+    answer_expose_limit = 1
+    if answer_expose_limit < 0:
+        answer_expose_limit = 0
+
+    allowed_types = set()
+    if include_question:
+        allowed_types.add("question")
+    if include_insight:
+        allowed_types.add("insight")
+
+    try:
+        members = redis_client.zrevrange(CHAT_ORDER_ZSET, 0, -1, withscores=True)
+    except Exception:
+        members = []
+
+    results: List[ChatListItem] = []
+    seen = set()
+
+    for member, score in members:
+        # member format chat_type:chat_id
+        if ":" not in member:
+            continue
+        chat_type, chat_id = member.split(":", 1)
+        if chat_type not in allowed_types:
+            continue
+        # Avoid duplicates
+        uniq = f"{chat_type}:{chat_id}"
+        if uniq in seen:
+            continue
+        # SKIP & CLEAN ORPHANS (no list + no meta)
+        if is_orphan(chat_type, chat_id):
+            remove_chat_order_member(chat_id, chat_type)
+            continue
+        seen.add(uniq)
+
+        meta_raw = redis_client.get(chat_meta_key(chat_id, chat_type))
+        title = None
+        last_activity_iso = to_iso(score)
+
+        if meta_raw:
+            try:
+                meta = json.loads(meta_raw)
+                title = meta.get("title") or title
+                # Prefer stored last_activity if exists
+                la = meta.get("last_activity")
+                if la is not None:
+                    last_activity_iso = to_iso(la)
+            except Exception:
+                pass
+
+        if not title:
+            # Fallback from first message
+            first_raw = redis_client.lindex(redis_key(chat_id, chat_type), 0)
+            if first_raw:
                 try:
-                    meta = json.loads(meta_raw)
-                    title = meta.get("title")
+                    first = json.loads(first_raw)
+                    q = first.get("question", "").strip()
+                    title = (q[:60] + "...") if q and len(q) > 60 else (q or None)
                 except Exception:
                     pass
-            # Fallback: derive from first message question
-            if not title:
-                first_raw = redis_client.lindex(key, 0)
-                if first_raw:
-                    try:
-                        first = json.loads(first_raw)
-                        q = first.get("question", "").strip()
-                        title = (q[:60] + "...") if len(q) > 60 else q
-                    except Exception:
-                        pass
-            items.append(ChatListItem(chat_id=chat_id, title=title or "Conversation"))
-    # Optional: sort alphabetically by title
-    items.sort(key=lambda x: x.title.lower())
-    return items
+        if not title:
+            title = "Conversation"
 
+        results.append(
+            ChatListItem(
+                chat_id=chat_id,
+                title=title,
+                last_answer=None,   # fill later for top N
+                timestamp=last_activity_iso
+            )
+        )
+
+    # Migration support: include chats not yet in ZSET
+    for t in allowed_types:
+        pattern = f"chat:{t}:*"
+        for key in redis_client.keys(pattern):
+            chat_id = key.split(f"chat:{t}:")[1]
+            uniq = f"{t}:{chat_id}"
+            if uniq in seen:
+                continue
+            # Skip orphans (should not happen here)
+            if is_orphan(t, chat_id):
+                continue
+            last_raw = redis_client.lindex(key, -1)
+            score_time = time.time()
+            if last_raw:
+                try:
+                    last = json.loads(last_raw)
+                    ts = last.get("ts")
+                    if isinstance(ts, str):
+                        try:
+                            score_time = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").timestamp()
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            redis_client.zadd(CHAT_ORDER_ZSET, {f"{t}:{chat_id}": score_time})
+
+    for idx, item in enumerate(results):
+        if idx < answer_expose_limit:
+            # Determine chat type efficiently by checking meta keys first
+            if redis_client.exists(chat_meta_key(item.chat_id, "question")):
+                item.last_answer = get_last_answer("question", item.chat_id)
+            elif redis_client.exists(chat_meta_key(item.chat_id, "insight")):
+                item.last_answer = get_last_answer("insight", item.chat_id)
+
+    return results
+
+# ------------------ PATCH delete endpoint: also remove from sorted set ------------------
 @router.delete("/chats/{chat_id}")
 async def delete_session(chat_id: str, chat_type: Optional[Literal["question","insight"]] = None):
-    """
-    Delete chat history (messages) and its meta (title, user_id, created).
-    If chat_type is provided, only that type is removed; otherwise both.
-    """
     deleted_lists = 0
     deleted_meta = 0
 
-    # QUESTION
     if chat_type in (None, "question"):
         deleted_lists += redis_client.delete(redis_key(chat_id, "question"))
         deleted_meta += redis_client.delete(chat_meta_key(chat_id, "question"))
+        remove_chat_order_member(chat_id, "question")
 
-    # INSIGHT
     if chat_type in (None, "insight"):
         deleted_lists += redis_client.delete(redis_key(chat_id, "insight"))
         deleted_meta += redis_client.delete(chat_meta_key(chat_id, "insight"))
+        remove_chat_order_member(chat_id, "insight")
 
     if (deleted_lists + deleted_meta) == 0:
+        # Ensure also no stale ordering member
+        if chat_type:
+            remove_chat_order_member(chat_id, chat_type)
+        else:
+            remove_chat_order_member(chat_id, None)
         raise HTTPException(status_code=404, detail="Not found")
 
     return {
