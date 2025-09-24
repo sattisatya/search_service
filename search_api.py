@@ -511,13 +511,12 @@ async def list_chats(
                     pass
             redis_client.zadd(CHAT_ORDER_ZSET, {f"{t}:{chat_id}": score_time})
 
-    for idx, item in enumerate(results):
-        if idx < answer_expose_limit:
-            # Determine chat type efficiently by checking meta keys first
-            if redis_client.exists(chat_meta_key(item.chat_id, "question")):
-                item.last_answer = get_last_answer("question", item.chat_id)
-            elif redis_client.exists(chat_meta_key(item.chat_id, "insight")):
-                item.last_answer = get_last_answer("insight", item.chat_id)
+    for item in results:
+        # Determine chat type efficiently by checking meta keys first
+        if redis_client.exists(chat_meta_key(item.chat_id, "question")):
+            item.last_answer = get_last_answer("question", item.chat_id)
+        elif redis_client.exists(chat_meta_key(item.chat_id, "insight")):
+            item.last_answer = get_last_answer("insight", item.chat_id)
 
     return results
 
