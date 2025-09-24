@@ -59,31 +59,28 @@ async def get_insights():
                 tags = [t.strip(" '\"") for t in raw_tags[1:-1].split(",") if t.strip(" '\"")]
             else:
                 tags = [t.strip() for t in str(raw_tags).split(",") if t.strip()]
-            
-            # Get or generate timestamp
-            updated_at = doc.get("updatedAt", datetime.utcnow().isoformat())
-            
-            # Create insight response
-            # Convert updatedAt to UTC ISO format if possible
-            updated_at_str = str(doc.get("updatedAt", datetime.utcnow().isoformat()))
-            try:
-                # Parse the local time string
-                local_dt = datetime.fromisoformat(updated_at_str)
-                # Convert to UTC
-                utc_dt = local_dt.astimezone(datetime.timezone.utc)
-                updated_at_utc = utc_dt.isoformat()
-            except Exception:
-                updated_at_utc = datetime.utcnow().isoformat()
+
+            # Only convert the retrieved time to a string; don't set or update it here
+            updated_at_raw = doc.get("updatedAt")
+            if isinstance(updated_at_raw, datetime):
+                updated_at_str = updated_at_raw.isoformat()
+            elif isinstance(updated_at_raw, str):
+                try:
+                    updated_at_str = datetime.fromisoformat(updated_at_raw).isoformat()
+                except Exception:
+                    updated_at_str = updated_at_raw  # Keep as-is if not ISO
+            else:
+                updated_at_str = ""
 
             insights.append(
-                InsightResponse(
-                    id=doc.get("Insight ID", ""),
-                    title=doc.get("title", doc.get("insight", "")[:50] + "..."),
-                    updatedAt=updated_at_utc,
-                    summary=doc.get("insight", ""),
-                    type=doc.get("type", "DOCUMENT"),
-                    tags=tags[:4]  # Limit to 4 tags
-                )
+            InsightResponse(
+                id=doc.get("Insight ID", ""),
+                title=doc.get("title", doc.get("insight", "")[:50] + "..."),
+                updatedAt=updated_at_str,
+                summary=doc.get("insight", ""),
+                type=doc.get("type", "DOCUMENT"),
+                tags=tags[:4]  # Limit to 4 tags
+            )
             )
         return insights
     except Exception as e:

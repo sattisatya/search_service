@@ -193,6 +193,14 @@ def to_iso(val) -> str:
 
 # ------------------ ENDPOINTS ------------------
 
+@router.get("/health", tags=["health"])
+async def health_check():
+    """
+    Simple health check endpoint.
+    Returns 200 OK and a status message.
+    """
+    return {"status": "ok"}
+
 @router.post("/search", response_model=SearchResponse)
 async def search_question(request: QuestionRequest):
     chat_id = request.chat_id or str(uuid.uuid4())
