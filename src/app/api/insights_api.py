@@ -1,30 +1,16 @@
 from fastapi import FastAPI, HTTPException, APIRouter
-from pydantic import BaseModel
-from pymongo import MongoClient
 from typing import List
 import os
 from datetime import datetime
 from dotenv import load_dotenv
 from ..services.mongo_service import connect_to_mongodb
+from ..models.model import InsightResponse
 
 # Load environment variables
 load_dotenv()
 
 app = FastAPI()
 router = APIRouter(prefix="/insights", tags=["insights"])
-
-# Updated Response model
-class InsightResponse(BaseModel):
-    id: str
-    title: str
-    updatedAt: str
-    summary: str
-    type: str
-    tags: list[str]
-
-
-
-
 
 # List insights  (GET /insights)
 @router.get("/", response_model=List[InsightResponse])
@@ -79,7 +65,5 @@ async def get_insights():
     finally:
         if mongo_client:
             mongo_client.close()
-
-
 
 app.include_router(router)

@@ -39,3 +39,13 @@ class ChatListItem(BaseModel):
     title: str
     last_answer: Optional[str] = None
     timestamp: Optional[str] = None
+
+
+# Updated Response model
+class InsightResponse(BaseModel):
+    id: str
+    title: str
+    updatedAt: str
+    summary: str
+    type: str
+    tags: list[str]
