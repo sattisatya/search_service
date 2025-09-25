@@ -188,6 +188,21 @@ Delete a chat and its history.
 }
 ```
 
+#### `DELETE /chats`
+Delete a chat and its history.
+
+**Response:**
+```json
+{
+  "detail": "All sessions deleted",
+  "result": {
+    "deleted_lists": 2,
+    "deleted_meta": 2,
+    "removed_order_zset": true
+  }
+}
+```
+
 ### Insights Endpoints
 
 #### `GET /insights/`
@@ -682,7 +697,7 @@ Application logs include:
 
 Run with debug logging:
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --log-level debug
+uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --log-level debug
 ```
 
 ## Contributing

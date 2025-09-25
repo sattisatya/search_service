@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from search_api import router as search_router
-from insights_api import router as insights_router
+from src.app.api.search_api import router as search_router
+from src.app.api.insights_api import router as insights_router
+from src.app.api.chats import router as chats_router
 
 app = FastAPI(title="Unified Service")
 
@@ -16,5 +17,8 @@ app.add_middleware(
 
 app.include_router(search_router)
 app.include_router(insights_router)
+app.include_router(chats_router)
 
-# Now /docs shows all endpoints
+@app.get("/health", tags=["health"])
+async def health_check():
+    return {"status": "ok"}

@@ -5,6 +5,7 @@ from typing import List
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+from ..services.mongo_service import connect_to_mongodb
 
 # Load environment variables
 load_dotenv()
@@ -22,23 +23,13 @@ class InsightResponse(BaseModel):
     tags: list[str]
 
 
-def connect_to_mongodb():
-    """Connect to MongoDB and return database collection"""
-    try:
-        mongo_uri = os.getenv('mongo_connection_string')
-        client = MongoClient(mongo_uri)
-        db = client['crda']
-        collection = db['insights']
-        return client, collection
-    except Exception as e:
-        print(f"Error connecting to MongoDB: {str(e)}")
-        return None, None
+
 
 
 # List insights  (GET /insights)
 @router.get("/", response_model=List[InsightResponse])
 async def get_insights():
-    mongo_client, collection = connect_to_mongodb()
+    mongo_client, collection = connect_to_mongodb(os.getenv("insights_collection_name", "insights"))
     if mongo_client is None or collection is None:
         raise HTTPException(status_code=500, detail="Database connection failed")
     try:
@@ -92,7 +83,3 @@ async def get_insights():
 
 
 app.include_router(router)
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
