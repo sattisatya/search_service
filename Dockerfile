@@ -33,4 +33,4 @@ COPY .env .env
 HEALTHCHECK CMD python -c "import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1',8000))" || exit 1
 
 # Start app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", " src.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

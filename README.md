@@ -533,7 +533,7 @@ VECTOR_INDEX_NAME=questions_index
 
 4. **Run Application**
    ```bash
-   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+   uvicorn  src.app.main:app --host 0.0.0.0 --port 8000 --reload
    ```
 
 5. **Access Documentation**
