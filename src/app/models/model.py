@@ -10,7 +10,7 @@ class QuestionRequest(BaseModel):
 class SearchResponse(BaseModel):
     question: str
     answer: str
-    follow_up_questions: List[str]
+    follow_up_questions: List[str] = []
     chat_id: str
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None
@@ -22,10 +22,10 @@ class HistoryItem(BaseModel):
 
 class HistoryResponse(BaseModel):
     chat_id: str
-    chat_type: Literal["question", "insight"]
+    chat_type: Literal["question", "insight", "ask"]   # added "ask"
     user_id: str
     chat_title: Optional[str] = None
-    history: List[HistoryItem]
+    history: List[HistoryItem] = []
 
 class ChatSummary(BaseModel):
     chat_id: str
@@ -49,3 +49,23 @@ class InsightResponse(BaseModel):
     summary: str
     type: str
     tags: list[str]
+
+
+
+# ---------- file-upload models ----------
+class FileUploadQuestionRequest(BaseModel):
+    document_ids: Optional[List[str]] = None
+    question: str
+    chat_id: Optional[str] = None
+    chat_type: Literal["question", "insight", "ask"] = "ask"
+
+class FileUploadQuestionResponse(BaseModel):
+    question: str
+    answer: str
+    follow_up_questions: List[str]
+    chat_id: str
+    chat_type: Literal["ask","question","insight"]
+    document_ids: Optional[List[str]]
+    documents_found: int
+    ts: str
+    processing_time: float

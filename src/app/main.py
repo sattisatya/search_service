@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.app.api.search_api import router as search_router
 from src.app.api.insights_api import router as insights_router
 from src.app.api.chats import router as chats_router
+from src.app.api.file_upload import router as upload_router
 
 app = FastAPI(title="Unified Service")
 
@@ -18,6 +19,7 @@ app.add_middleware(
 app.include_router(search_router)
 app.include_router(insights_router)
 app.include_router(chats_router)
+app.include_router(upload_router)
 
 @app.get("/health", tags=["health"])
 async def health_check():

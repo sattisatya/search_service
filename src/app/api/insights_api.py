@@ -9,7 +9,7 @@ from ..models.model import InsightResponse
 # Load environment variables
 load_dotenv()
 
-app = FastAPI()
+
 router = APIRouter(prefix="/insights", tags=["insights"])
 
 # List insights  (GET /insights)
@@ -65,5 +65,3 @@ async def get_insights():
     finally:
         if mongo_client:
             mongo_client.close()
-
-app.include_router(router)

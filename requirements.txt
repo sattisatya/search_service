@@ -8,3 +8,5 @@ redis==5.0.1
 pydantic==2.11.9
 typing-extensions==4.14.0
 python-multipart==0.0.6
+pdfminer.six
+python-docx

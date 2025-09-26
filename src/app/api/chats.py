@@ -21,11 +21,10 @@ from ..services.redis_service import (
 )
 
 
-app = FastAPI()
 router = APIRouter(prefix="/chats", tags=["chats"])
 
 @router.get("/{chat_id}", response_model=HistoryResponse)
-async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
+async def get_history(chat_id: str, chat_type: Literal["question", "insight", "ask"]):
     key = redis_key(chat_id, chat_type)
     raw = redis_client.lrange(key, 0, -1)
 
@@ -81,7 +80,7 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
 # update_chat_meta_on_message imported from redis_service
 # list_chats and delete_session unchanged but now use redis_service helpers
 @router.get("/", response_model=List[ChatListItem])
-async def list_chats(include_insight: bool = True, include_question: bool = True):
+async def list_chats(include_insight: bool = True, include_question: bool = True, include_ask: bool = True):
     answer_expose_limit = 1
     if answer_expose_limit < 0:
         answer_expose_limit = 0
@@ -91,6 +90,8 @@ async def list_chats(include_insight: bool = True, include_question: bool = True
         allowed_types.add("question")
     if include_insight:
         allowed_types.add("insight")
+    if include_ask:
+        allowed_types.add("ask")
 
     try:
         members = redis_client.zrevrange(CHAT_ORDER_ZSET, 0, -1, withscores=True)
@@ -182,7 +183,7 @@ async def list_chats(include_insight: bool = True, include_question: bool = True
     return results
 
 @router.delete("/{chat_id}")
-async def delete_session(chat_id: str, chat_type: Optional[Literal["question","insight"]] = None):
+async def delete_session(chat_id: str, chat_type: Optional[Literal["question","insight","ask"]] = None):
     deleted_lists = 0
     deleted_meta = 0
 
@@ -195,6 +196,11 @@ async def delete_session(chat_id: str, chat_type: Optional[Literal["question","i
         deleted_lists += redis_client.delete(redis_key(chat_id, "insight"))
         deleted_meta += redis_client.delete(chat_meta_key(chat_id, "insight"))
         remove_chat_order_member(chat_id, "insight")
+
+    if chat_type in (None, "ask"):
+        deleted_lists += redis_client.delete(redis_key(chat_id, "ask"))
+        deleted_meta += redis_client.delete(chat_meta_key(chat_id, "ask"))
+        remove_chat_order_member(chat_id, "ask")
 
     if (deleted_lists + deleted_meta) == 0:
         if chat_type:
