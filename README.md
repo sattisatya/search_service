@@ -373,6 +373,50 @@ Get detailed insight by ID.
 }
 ```
 
+### Upload Endpoints
+#### ``POST /upload``
+**Request**
+```
+multipart/form-data
+```
+
+**Response**
+```json
+{
+  "document_id": "7e8e1ef877f9535dc6faa9b0015d9d42"
+}
+```
+#### ``POST /upload/ask``
+**Request**
+```json
+{
+  "document_ids": [
+    "string"
+  ],
+  "question": "string",
+  "prior_history": [
+    {
+      "question": "string",
+      "answer": "string"
+    }
+  ]
+}
+```
+**Response**
+```json
+{
+  "question": "what are some questions based on this data",
+  "answer": "Some questions based on this data could be:",
+  "processing_time": 4.532000000006519,
+  "follow_up_questions": [
+    "What are the key unresolved issues related to the N1 Trunk Infrastructure project based on the meeting minutes?",
+    "How are the responsibilities and action items distributed among the officers involved in the project?",
+    "What are the specific timelines set for completing various tasks within the project according to the meeting minutes?"
+  ]
+}
+```
+
+
 ## Data Models
 
 ### Request Models
@@ -385,19 +429,20 @@ class QuestionRequest(BaseModel):
     chat_type: Literal["question", "insight"] = "question" 
 ```
 
-#### `InsightResponse`
+#### `FileUploadQuestionsRequest`
 ```python
-# Response model for listing insights
-class InsightResponse(BaseModel):
-    id: str
-    title: str
-    updatedAt: str
-    summary: str
-    type: str
-    tags: list[str]
-   
 
+class QAPair(BaseModel):
+    question: str
+    answer: str
+
+class FileUploadQuestionRequest(BaseModel):
+    document_ids: Optional[List[str]] = None
+    question: str
+    prior_history: Optional[List[QAPair]] = None  # client-managed lightweight context
 ```
+
+
 
 ### Response Models
 
@@ -411,7 +456,19 @@ class SearchResponse(BaseModel):
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None   # NEW (returned only when created)
 ```
+#### `InsightResponse`
+```python
+# Response model for listing insights
+class InsightResponse(BaseModel):
+    id: str
+    title: str
+    updatedAt: str
+    summary: str
+    type: str
+    tags: list[str]
+   
 
+```
 #### `HistoryResponse`
 ```python
 class HistoryResponse(BaseModel):
@@ -427,6 +484,15 @@ class HistoryItem(BaseModel):
     answer: str
     ts: Optional[int] = None  # unix timestamp (user_id removed from each item)
 ```
+#### `FileUploadQuestionsResponse`
+```python
+class FileUploadQuestionResponse(BaseModel):
+    question: str
+    answer: str
+    processing_time: float
+    follow_up_questions: List[str]
+```
+
 
 ## Environment Variables
 
