@@ -62,10 +62,6 @@ class FileUploadQuestionRequest(BaseModel):
 class FileUploadQuestionResponse(BaseModel):
     question: str
     answer: str
+    processing_time: float
     follow_up_questions: List[str]
     chat_id: str
-    chat_type: Literal["ask","question","insight"]
-    document_ids: Optional[List[str]]
-    documents_found: int
-    ts: str
-    processing_time: float

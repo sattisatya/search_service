@@ -106,24 +106,6 @@ async def upload_file(file: UploadFile = File(...), chat_id: Optional[str] = Non
 
     # create a new chat session for this document with "ask" chat type
     chat_id = chat_id or str(uuid.uuid4())
-    chat_type = "ask"  # changed to "ask" for uploaded documents
-    list_key = redis_key(chat_id, chat_type)
-
-    initial_item = {
-        "question": f"[Document uploaded] {file.filename}",
-        "answer": f"Document stored with id {doc_id}",
-        "ts": iso_utc_now(),
-        "document_id": doc_id
-    }
-    try:
-        redis_client.rpush(list_key, json.dumps(initial_item))
-        # set metadata (use filename as title)
-        update_chat_meta_on_message(chat_id, chat_type, title=file.filename)
-        update_chat_order(chat_type, chat_id)
-    except Exception:
-        # do not fail upload if Redis is down — the document itself was stored in memory
-        pass
-
     return {"document_id": doc_id, "chat_id": chat_id}
 
 # Update the ask_question endpoint to accept multiple document ids via body OR query params
@@ -272,36 +254,7 @@ User Question: {q_text}
     return FileUploadQuestionResponse(
         question=q_text,
         answer=answer,
+        processing_time=processing_time,
         follow_up_questions=follow_ups,
         chat_id=chat_id_final,
-        chat_type=chat_type_final,
-        document_ids=ids,
-        documents_found=documents_found,
-        ts=ts_val,
-        processing_time=processing_time
     )
-
-# Add endpoint to list uploaded documents
-@router.get("/documents")
-async def list_uploaded_documents():
-    """List all uploaded documents from MongoDB"""
-    mongo_client, collection = connect_to_mongodb("upload")
-    if mongo_client is None or collection is None:
-        raise HTTPException(status_code=500, detail="Database connection failed")
-    
-    try:
-        documents = []
-        cursor = collection.find({}, {"id": 1, "file_name": 1, "created_date": 1, "_id": 0})
-        
-        for doc in cursor:
-            documents.append({
-                "document_id": doc.get("id"),
-                "file_name": doc.get("file_name"),
-                "created_date": doc.get("created_date")
-            })
-        
-        return {"documents": documents, "count": len(documents)}
-        
-    finally:
-        mongo_client.close()
-
