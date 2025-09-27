@@ -22,7 +22,7 @@ class HistoryItem(BaseModel):
 
 class HistoryResponse(BaseModel):
     chat_id: str
-    chat_type: Literal["question", "insight", "ask"]   # added "ask"
+    chat_type: Literal["question", "insight"]
     user_id: str
     chat_title: Optional[str] = None
     history: List[HistoryItem] = []
@@ -53,15 +53,18 @@ class InsightResponse(BaseModel):
 
 
 # ---------- file-upload models ----------
+
+class QAPair(BaseModel):
+    question: str
+    answer: str
+
 class FileUploadQuestionRequest(BaseModel):
     document_ids: Optional[List[str]] = None
     question: str
-    chat_id: Optional[str] = None
-    chat_type: Literal["question", "insight", "ask"] = "ask"
+    prior_history: Optional[List[QAPair]] = None  # client-managed lightweight context
 
 class FileUploadQuestionResponse(BaseModel):
     question: str
     answer: str
     processing_time: float
     follow_up_questions: List[str]
-    chat_id: str
