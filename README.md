@@ -476,6 +476,33 @@ class SearchResponse(BaseModel):
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None   # NEW (returned only when created)
 ```
+#### `FileUploadQuestionsRequest`
+```python
+
+class QAPair(BaseModel):
+    question: str
+    answer: str
+
+class FileUploadQuestionRequest(BaseModel):
+    document_ids: Optional[List[str]] = None
+    question: str
+    prior_history: Optional[List[QAPair]] = None  # client-managed lightweight context
+```
+
+
+
+### Response Models
+
+#### `SearchResponse`
+```python
+class SearchResponse(BaseModel):
+    question: str
+    answer: str
+    follow_up_questions: List[str]
+    chat_id: str                  # NEW (returned only when created)
+    chat_type: Literal["question", "insight"]
+    title: Optional[str] = None   # NEW (returned only when created)
+```
 #### `InsightResponse`
 ```python
 # Response model for listing insights
@@ -504,6 +531,15 @@ class HistoryItem(BaseModel):
     answer: str
     ts: Optional[int] = None  # unix timestamp (user_id removed from each item)
 ```
+#### `FileUploadQuestionsResponse`
+```python
+class FileUploadQuestionResponse(BaseModel):
+    question: str
+    answer: str
+    processing_time: float
+    follow_up_questions: List[str]
+```
+
 #### `FileUploadQuestionsResponse`
 ```python
 class FileUploadQuestionResponse(BaseModel):

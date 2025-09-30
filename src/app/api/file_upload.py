@@ -1,44 +1,20 @@
-from fastapi import APIRouter, FastAPI, UploadFile, File, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import Dict, List, Optional
-import os
-import io
-import asyncio
+import os, io, asyncio, hashlib, json
 from datetime import datetime
-import hashlib
 from dotenv import load_dotenv
-import uuid
-import json
-
-# Document processing
 from pdfminer.high_level import extract_text as extract_pdf_text
 from docx import Document
-from ..services.openai_service import get_client, generate_chat_title
+
+from ..services.openai_service import get_client
 from ..models.model import FileUploadQuestionRequest, FileUploadQuestionResponse
 
-# add mongo service import
 from ..services.mongo_service import connect_to_mongodb
 
-# Redis chat helpers
-from ..services.redis_service import (
-    redis_client,
-    redis_key,
-    chat_meta_key,
-    update_chat_meta_on_message,
-    update_chat_order,
-    iso_utc_now
-)
-
 router = APIRouter(prefix="/upload", tags=["upload"])
-
-# Load environment variables
 load_dotenv()
-
-# Initialize OpenAI client once
 openai_client = get_client()
 
-# In-memory document storage
 document_store: Dict[str, Dict] = {}
 
 async def process_document(file: UploadFile) -> str:
@@ -63,7 +39,6 @@ async def process_document(file: UploadFile) -> str:
         else:
             raise HTTPException(status_code=400, detail="Unsupported file format")
 
-        # Store document info in memory
         created_date = datetime.utcnow().isoformat()
         document_store[doc_id] = {
             'filename': fname,
@@ -96,7 +71,6 @@ async def process_document(file: UploadFile) -> str:
                     mongo_client.close()
                 except Exception:
                     pass
-
         return doc_id
 
     except HTTPException:
@@ -105,11 +79,9 @@ async def process_document(file: UploadFile) -> str:
         raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")
 
 @router.post("/")
-async def upload_file(file: UploadFile = File(...), chat_id: Optional[str] = None):
-    """Upload and process a document and create a chat session for it"""
+async def upload_file(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
-        
     doc_id = await process_document(file)
 
     # create a new chat session for this document with "ask" chat type
@@ -125,18 +97,16 @@ async def upload_file(file: UploadFile = File(...), chat_id: Optional[str] = Non
 
     return {"document_id": doc_id, "chat_id": chat_id}
 
-# Update the ask_question endpoint to accept multiple document ids via body OR query params
 @router.post("/ask", response_model=FileUploadQuestionResponse)
 async def ask_question(request: FileUploadQuestionRequest):
     """
-    Answer questions about uploaded documents.
-    If request.document_ids is provided and non-empty -> fetch those docs.
-    If omitted or empty -> skip Mongo lookup (no error) and proceed without document context.
+    Stateless document Q&A.
+    Client can supply prior_history (list of {question, answer}) for lightweight context.
     """
 
     start_time = asyncio.get_event_loop().time()
 
-    ids = request.document_ids or []          # optional now
+    ids = request.document_ids or []
     q_text = (request.question or "").strip()
     if not q_text:
         raise HTTPException(status_code=400, detail="Question text is required")
@@ -182,20 +152,17 @@ async def ask_question(request: FileUploadQuestionRequest):
     # --- end new block ---
 
     documents_content: List[str] = []
-    documents_found = 0
-
-    if ids:  # only hit Mongo if we actually got IDs
+    if ids:
         mongo_client, collection = connect_to_mongodb("upload")
         if mongo_client is None or collection is None:
             raise HTTPException(status_code=500, detail="Database connection failed")
         try:
             cursor = collection.find({"id": {"$in": ids}})
             for doc in cursor:
-                documents_found += 1
                 file_name = doc.get("file_name", "Unknown")
                 text_content = doc.get("text", "")
                 documents_content.append(
-                    f"Document: {file_name}\nContent:\n{text_content}\n{'='*50}\n"
+                    f"Document: {file_name}\nContent:\n{text_content}\n{'='*40}\n"
                 )
         finally:
             try:
@@ -203,37 +170,29 @@ async def ask_question(request: FileUploadQuestionRequest):
             except Exception:
                 pass
 
-    combined_content = "".join(documents_content) if documents_content else "(No documents provided or found; answer based only on prior chat context if any.)"
+    combined_docs = "".join(documents_content) if documents_content else "(No documents provided.)"
 
-    # (Optional) include prior chat context from Redis for continuity
-    prior_messages = []
-    try:
-        history_raw = redis_client.lrange(list_key, 0, -1)
-        for h in history_raw[-5:]:  # last 5 entries
-            try:
-                obj = json.loads(h)
-                prior_q = obj.get("question")
-                prior_a = obj.get("answer")
-                if prior_q and prior_a:
-                    prior_messages.append(f"Q: {prior_q}\nA: {prior_a}")
-            except Exception:
-                continue
-    except Exception:
-        pass
-    prior_context_block = "\n".join(prior_messages) if prior_messages else "None"
+    # Build lightweight prior context (last N kept client-side; re-sent each call)
+    prior_block = "None"
+    if request.prior_history:
+        lines = []
+        for qa in request.prior_history[-5:]:
+            lines.append(f"Q: {qa.question}\nA: {qa.answer}")
+        if lines:
+            prior_block = "\n".join(lines)
 
-    prompt = f"""You are an AI assistant answering user questions about uploaded documents.
+    prompt = f"""You are an AI assistant answering questions about uploaded documents.
 
-Provided Documents Content:
-{combined_content}
+Provided Documents:
+{combined_docs}
 
-Recent Chat Context (may be empty):
-{prior_context_block}
+Prior Chat Context (client-supplied; may be empty):
+{prior_block}
 
 Task:
-1. Answer the new user question strictly using the document content above if any; if no documents were provided, rely only on explicit prior Q&A context.
-2. If the answer cannot be derived from provided documents/context, reply: "I cannot answer based on the provided documents."
-3. Then produce three follow-up questions.
+1. Answer the new user question using ONLY the above document content and provided prior context.
+2. If the answer cannot be derived, reply exactly: "I cannot answer based on the provided documents."
+3. Provide three follow-up questions.
 
 Format exactly:
 ANSWER: <answer>
@@ -245,26 +204,28 @@ FOLLOW_UP_QUESTIONS:
 User Question: {q_text}
 """
 
-    response = openai_client.chat.completions.create(
+    ai_resp = openai_client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
         messages=[
-            {"role": "system", "content": "Be concise, factual, cite only provided content."},
+            {"role": "system", "content": "Be concise, factual; only use provided content."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.3,
-        max_tokens=1500
+        max_tokens=1000
     )
 
-    content = response.choices[0].message.content
+    content = ai_resp.choices[0].message.content
     parts = content.split("FOLLOW_UP_QUESTIONS:")
-
     answer = parts[0].replace("ANSWER:", "").strip()
+
     follow_ups: List[str] = []
     if len(parts) > 1:
         for line in parts[1].strip().splitlines():
-            ls = line.strip()
-            if ls and ls[0].isdigit():
-                cleaned = ls.lstrip("1234567890. )").strip()
+            t = line.strip()
+            if not t:
+                continue
+            if t[0].isdigit():
+                cleaned = t.lstrip("1234567890. )").strip()
                 if cleaned:
                     follow_ups.append(cleaned)
 
@@ -307,6 +268,5 @@ User Question: {q_text}
         question=q_text,
         answer=answer,
         processing_time=processing_time,
-        follow_up_questions=follow_ups,
-        chat_id=chat_id_final,
+        follow_up_questions=follow_ups
     )

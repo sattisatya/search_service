@@ -56,6 +56,11 @@ class InsightResponse(BaseModel):
 
 
 # ---------- file-upload models ----------
+
+class QAPair(BaseModel):
+    question: str
+    answer: str
+
 class FileUploadQuestionRequest(BaseModel):
     document_ids: Optional[List[str]] = None
     question: str
@@ -66,4 +71,3 @@ class FileUploadQuestionResponse(BaseModel):
     answer: str
     processing_time: float
     follow_up_questions: List[str]
-    chat_id: str
