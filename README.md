@@ -69,16 +69,23 @@ Intelligent question answering with chat context.
 **Response:**
 ```json
 {
-  "question": "What additional documents must a bidder submit?",
-  "answer": "In addition to the Technical Proposal, bidders must submit an Outline Quality Control & Assurance Plan, an Outline Social, Safety, Health, and Environment Plan, Management Strategies and Implementation Plans (MSIPs), a Programme for execution of Work, a Logistic Plan, an Organization Chart, a plan for deploying Plant & Machinery, a plan for procurement of key materials, and a plan for engaging specialized agencies for specific work components.",
+  "question": "What is the full tender reference number for the E6 Road Work Package VII?",
+  "answer": "The full tender reference number for the E6 Road Work Package VII is not explicitly mentioned in the provided context.",
   "follow_up_questions": [
-    "What is a C-ESMP and what does it include?",
-    "How is the bid evaluated?",
-    "What are the rules regarding the use of bidding forms?"
+    "What is the total amount of the Performance Guarantee (PG) required from the contractor?",
+    "What is the contractual implication of the Reverse Tendering (L1) clauses on project quality?",
+    "What type of contract is being used for this project, and what does it entail?"
   ],
-  "chat_id": "e856228f-64cd-42e4-9463-1d2f8cf3d132",
+  "chat_id": "ef2c3244-75c7-40f9-be8c-1853125abdb2",
   "chat_type": "question",
-  "title": "Understanding C-ESMP and its inclusions"
+  "title": "E6 Road Work Package VII Tender Number",
+  "tags": [
+    "Finance",
+    "Contract",
+    "Cost",
+    "Risk",
+    "Guntur Irr Phase3.pdf"
+  ]
 }
 ```
 
@@ -107,76 +114,64 @@ Retrieve conversation history for a session.
 }
 ```
 
-#### `GET /chats?include_insight=true&include_question=true'`
+#### `GET /chats?include_insight=true&include_question=true&include_documentqna=true'`
 List all active session IDs.
 
 **Response:**
 ```json
 [
   {
-    "chat_id": "123",
-    "title": "hi"
+    "chat_id": "ef2c3244-75c7-40f9-be8c-1853125abdb2",
+    "title": "E6 Road Work Package VII Tender Number",
+    "last_answer": "The full tender reference number for the E6 Road Work Package VII is not explicitly mentioned in the provided context.",
+    "timestamp": "2025-09-30T14:17:42Z"
   },
   {
-    "chat_id": "insight_I10",
-    "title": "The project team is leveraging both internal and external ex..."
+    "chat_id": "6a2bd6e5-5bc3-4750-953b-00ef53b85c0d",
+    "title": "Questions for Document Review",
+    "last_answer": "Some of the resolutions made during the review meeting included ensuring updated execution schedules are submitted, timely submission of the Utilization Certificate, obtaining approval for the Substation design, pursuing Environmental Clearance, and holding bi-weekly review meetings for progress monitoring.",
+    "timestamp": "2025-09-30T13:23:29Z"
   },
   {
-    "chat_id": "insight_I10",
-    "title": "The project team is leveraging both internal and external ex..."
+    "chat_id": "cfc54919-598e-4765-bbae-573fbd897cf9",
+    "title": "Status of Guntur Irrigation Project",
+    "last_answer": "The status of the Guntur Irrigation (IRR) project is that the finalized land requirement for phased development is approximately ~2,000 acres.",
+    "timestamp": "2025-09-30T12:28:49Z"
   },
   {
-    "chat_id": "02274b6e-5764-4503-bb59-3fbc5796d28b",
-    "title": "Understanding C-ESMP and its components"
+    "chat_id": "810d2ae5-b139-4839-96f4-4100bb948684",
+    "title": "Number of Projects",
+    "last_answer": "Based on the information provided, it appears that there is one project with an estimated progress of around 15%.",
+    "timestamp": "2025-09-30T12:28:04Z"
   },
   {
-    "chat_id": "53d67ea5-23e9-4356-b49c-4ffb72a8c2c7",
-    "title": "Understanding C-ESMP and its inclusions"
+    "chat_id": "c07b48fb-eb6e-475b-b3b9-172850d28fb1",
+    "title": "Material Supply Risk Mitigation",
+    "last_answer": "The mitigation for the Material Supply risk was that the Contractor was required to submit the final As-Built Drawings and O&M Manuals (5 sets) by 15 January 2027.",
+    "timestamp": "2025-09-30T12:27:43Z"
   },
   {
-    "chat_id": "baac1a5a-d8c5-43f9-9bf2-8d14ca210538",
-    "title": "Understanding C-ESMP Components"
+    "chat_id": "0173b394-391e-43c5-ae80-bcfc4eeda5af",
+    "title": "Contractor Mobilization Speed and Project Timeline Strategy",
+    "last_answer": "The mitigation for the Material Supply risk was to require the Contractor to submit the final As-Built Drawings and O&M Manuals (5 sets) by 15 January 2027.",
+    "timestamp": "2025-09-30T12:22:39Z"
   },
   {
-    "chat_id": "6fb48c17-1ce8-4fe7-bee4-adf01151b583",
-    "title": "Understanding C-ESMP Components"
+    "chat_id": "690929a8-10f1-4e2d-894a-4e993fdacdee",
+    "title": "Contractor Mobilization Speed and Timeline Trade-offs",
+    "last_answer": "The contractor achieved **90% mobilization (plant, machinery, site office) by April 18, 2025**. To maintain the 24-month project timeline despite land acquisition delays, they began work in cleared segments immediately, reaching **20.5% physical progress** by September 2025.",
+    "timestamp": "2025-09-30T12:16:40Z"
   },
   {
-    "chat_id": "9e9b7147-cab5-4f69-b5ce-8d4d4498289b",
-    "title": "What is a C-ESMP and what does it include?"
-  },
-  {
-    "chat_id": "421c672f-2955-4823-a37d-92cbbce3b588",
-    "title": "What is a C-ESMP and what does it include?"
-  },
-  {
-    "chat_id": "99885ea7-845f-4881-8dc4-a56e36b48c0a",
-    "title": "What is a C-ESMP and what does it include?"
-  },
-  {
-    "chat_id": "cc2cc519-5060-4684-ac86-6009c6159a27",
-    "title": "What is a C-ESMP and what does it include?"
-  },
-  {
-    "chat_id": "55a278d3-3329-4734-b74e-61b62376e535",
-    "title": "What is a C-ESMP and what does it include?"
-  },
-  {
-    "chat_id": "12c29b3e-eeb8-4e89-9e47-f03100ceff46",
-    "title": "What is a C-ESMP and what does it include?"
-  },
-  {
-    "chat_id": "58c97679-b88e-423a-9489-2551fa0ab8b0",
-    "title": "What is a C-ESMP and what does it include?"
-  },
-  {
-    "chat_id": "22e9fd71-84fe-49e0-b3db-c36ebb606a81",
-    "title": "What is a C-ESMP and what does it include?"
+    "chat_id": "d54e7d59-784b-4632-a3ce-219d1c2244eb",
+    "title": "E6 Road Work Package VII Tender Number",
+    "last_answer": "The full tender reference number for the E6 Road Work Package VII is not explicitly mentioned in the prior context provided. You may need to refer to the official tender documents or contact the relevant procurement or contracting department for this specific information.",
+    "timestamp": "2025-09-30T11:52:12Z"
   }
 ]
 ```
 
-#### `DELETE /chats/{chat_id}?chat_type=question/insight`
+#### `DELETE /chats/{chat_id}?chat_type=question/insight/documentqna`
 Delete a chat and its history.
 
 **Response:**
@@ -212,133 +207,157 @@ List all insights (newest first).
 ```json
 [
   {
-    "id": "insight_I10",
-    "title": "Internal and External Teams Drive Quality Solutions",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
-    "type": "MEETING",
+    "id": "insight_11",
+    "title": "Monsoon Risk and Scheduling Urgency...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Monsoon Risk and Scheduling Urgency",
+    "user_question": "How did the aggressive 12-month schedule impact the foundation work and monsoon preparedness actions?",
+    "detailed_answer": "The Superintending Engineer (SE) emphasized sticking to the **aggressive 12-month schedule** for foundation work during the pre-monsoon dry period. To mitigate monsoon impact, the SE stressed the urgency of completing all **canal bed work (CC lining)**. Action items mandated the contractor to install storm water drains and bunds around active pits **before the end of July**.",
     "tags": [
-      "Roads & Infrastructure for Zone 1A",
-      "All Meetings",
-      "Event: Multi-Meeting Insights",
-      "Collaboration"
+      "Risk Management",
+      "Monsoon",
+      "Foundation",
+      "Schedule"
     ]
   },
   {
-    "id": "insight_I9",
-    "title": "Contractor Over-Dependence Poses Project Risk",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "A significant risk of 'contractor over-dependence' has been identified, as the current contractor holds three other CRDA contracts, necessitating a new monitoring protocol.",
-    "type": "MEETING",
+    "id": "insight_10",
+    "title": "Project Timeline and Critical Progress Milestones...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Project Timeline and Critical Progress Milestones",
+    "user_question": "What is the total completion period for the project, and what is the latest reported physical progress and key milestones achieved?",
+    "detailed_answer": "The project has a completion period of **12 months from the date of agreement**. As of the July 25, 2024 review meeting, the contractor reported **45% physical progress**. Critical milestones achieved include: **Full piling complete**, and **Pier P1 and P2 pile caps cast**. The **LMC CC lining** (canal bed work) was **confirmed met by the September 30 deadline**.",
     "tags": [
-      "Roads & Infrastructure for Zone 1A",
-      "10 December 2025",
-      "Event: Finance & Risk Review",
-      "Risk Management"
+      "Progress",
+      "Timeline",
+      "Milestones",
+      "Piling"
     ]
   },
   {
-    "id": "insight_I8",
-    "title": "Performance-Based Payments Linked to Verification",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "The projectâ€™s payment process is tied directly to performance and external verification, indicating a strong focus on quality assurance before financial disbursements.",
-    "type": "MEETING",
+    "id": "insight_9",
+    "title": "Contract Valuation and Bid Security Requirements...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Contract Valuation and Bid Security Requirements",
+    "user_question": "What are the key financial and commercial parameters for this tender, including the Estimated Contract Value and the Bid Security amount?",
+    "detailed_answer": "The **Estimated Contract Value (ECV)** is **₹19,36,33,680 (INR 19.36 Crores)**. The required **Bid Security (EMD)** is **₹1,936,500.00**. The contract uses a **price-based (L1) selection** criterion, the evaluation type is **percentage based** (above/below ECV), and **Reverse Tendering** is applicable. **Joint Venture (JV) participation is permitted**.",
     "tags": [
-      "Roads & Infrastructure for Zone 1A",
-      "10 December 2025",
-      "Event: Finance & Risk Review",
-      "Payments"
+      "Finance",
+      "Tender",
+      "ECV",
+      "EMD"
     ]
   },
   {
-    "id": "insight_I7",
-    "title": "Dust Suppression Identified as Urgent Concern",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "Environmental compliance, particularly regarding dust suppression, has been identified as a key area of concern that requires immediate action and a formal audit.",
-    "type": "MEETING",
+    "id": "insight_8",
+    "title": "Bridge Structure and Highway Connectivity...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Bridge Structure and Highway Connectivity",
+    "user_question": "What is the detailed scope of the civil work and its specific location within the Polavaram Project?",
+    "detailed_answer": "The work is the Construction of an **NH Crossing Bridge** on the **Left Main Canal (LMC)** near **Kathipudi village** in Kakinada District. The structure consists of a **4-lane main bridge** with an **additional 2-lane service bridge on either side**. It intersects **National Highway NH-216** at **Km 1.850**. The scope also includes approach roads, canal excavation, and **Cement Concrete (CC) lining** of the canal.",
     "tags": [
-      "Roads & Infrastructure for Zone 1A",
-      "20 July 2025",
-      "Event: Technical Review",
-      "Environmental Compliance"
+      "Scope",
+      "Location",
+      "LMC",
+      "NH-216"
     ]
   },
   {
-    "id": "insight_I6",
-    "title": "Monsoon Delay Requires Formal Recovery Planning",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "The project is currently facing a 30-day delay due to external factors like monsoon rains, requiring the development of a formal recovery plan to get back on schedule.",
-    "type": "MEETING",
+    "id": "insight_7",
+    "title": "High-Stakes Procurement Integrity and Governance...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "High-Stakes Procurement Integrity and Governance",
+    "user_question": "What stringent integrity and governance mechanisms are in place for the procurement of the Polavaram and Guntur projects?",
+    "detailed_answer": "The State's procurement process is protected by high-stakes governance clauses:\n\n1. **Polavaram Tender Integrity (G.O.Ms.No.174):** The L1 bidder is required to submit original hard copies of all uploaded documents. **Severe Penalties** are explicitly detailed for non-submission or variation of documents, including **suspension from tenders for 3 years** and potential criminal prosecution.\n\n2. **Guntur IRR Reverse Tendering (L1):** The project is subject to the strict adherence of QA standards due to the **reverse tendering process**. This governance model inherently carries a **risk of quality compromise due to tight margins**, which is mitigated by mandated **Independent Third-Party QA/QC audits** and strict material testing.",
     "tags": [
-      "Roads & Infrastructure for Zone 1A",
-      "20 July 2025",
-      "Event: Technical Review",
-      "Progress"
+      "Governance",
+      "Integrity Clause",
+      "Reverse Tendering",
+      "Penalties"
     ]
   },
   {
-    "id": "insight_I5",
-    "title": "Project Kickoff Defines Legal and Financial Framework",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "Initial project kickoff established a clear framework for the 'Roads & Infrastructure for Zone 1A' project, including timelines, financial structures, and legal clauses.",
-    "type": "DOCUMENT",
+    "id": "insight_6",
+    "title": "Schedule Performance and Delay Mitigation...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Schedule Performance and Delay Mitigation",
+    "user_question": "How do the active construction projects compare in terms of schedule performance, and what is the long-term accountability timeline?",
+    "detailed_answer": "The two foundational construction projects have varying schedule statuses:\n\n1.  **Amaravati E6 Road:** The project is managing a slight gap between time elapsed and progress: **~25% Time Elapsed** versus **20.5% Physical Progress** (as of Sept 2025). The 3-week delay from utility conflicts puts pressure on the March 2027 completion goal.\n\n2.  **Guntur IRR Loop Phase III:** This project has just commenced (NTP Sept 2025) and is only at **5% physical progress**. The primary schedule risk is the delay in quality clearance (cross-slope rectification) and land handover, preventing the start of higher-productivity pavement work.\n\n**Long-Term Accountability:** The **Amaravati E6 Road** project sets a long-term compliance milestone with its **24-month Defect Liability Period (DLP)**, scheduled to commence with the issuance of the Provisional Completion Certificate on **January 1, 2027**.",
     "tags": [
-      "Roads & Infrastructure for Zone 1A",
-      "15 January 2025",
-      "Event: Kickoff Meeting",
-      "Finance"
+      "Schedule Performance",
+      "DLP",
+      "Time Elapsed",
+      "Physical Progress"
     ]
   },
   {
-    "id": "insight_I4",
-    "title": "Multi-Tiered System for Dispute Resolution",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "The bidding process has a clear and multi-tiered system for resolving disputes and complaints.",
-    "type": "DOCUMENT",
+    "id": "insight_5",
+    "title": "Financial Flow and Investment Scale...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Financial Flow and Investment Scale",
+    "user_question": "What is the financial scale of the two major road/utility projects, and what is the current status of financial disbursement (Running Account Bills)?",
+    "detailed_answer": "The Amaravati E6 Road project is the largest civil works contract documented at **323.57 Crores**, significantly larger than the Guntur IRR Loop Phase III at **~46.56 Crores**.\n\n**Financial Flow Status:** Disbursement is active, with the **Second Running Bill** for the Amaravati E6 Road (representing 25% progress) confirmed processed and paid. The **First Running Account (R/A) Bill** for the newly started Guntur IRR Loop (estimated at ~15% progress) is currently being finalized for payment processing.",
     "tags": [
-      "Amaravati Capital City Development Program",
-      "31 December 2024",
-      "Document: Package - 3 (Neerukonda Reservior)",
-      "Dispute Resolution"
+      "Financial Status",
+      "Contract Value",
+      "Funding",
+      "Running Bill"
     ]
   },
   {
-    "id": "insight_I3",
-    "title": "Strong Emphasis on Environmental and Social Compliance",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "There is a strong emphasis on environmental and social compliance, backed by specific requirements and penalties.",
-    "type": "DOCUMENT",
+    "id": "insight_4",
+    "title": "Foundation Milestones and Land Clearance Status...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Foundation Milestones and Land Clearance Status",
+    "user_question": "What foundational milestones have been achieved, and what is the current status of the residual land clearance risk across the construction projects?",
+    "detailed_answer": "Key foundational milestones have been hit, but land remains a risk:\n\n1. **Polavaram LMC Bridge:** The critical **CC lining of the LMC was completed** by the Sept 30, 2024 deadline, allowing canal operations to resume without affecting superstructure work.\n\n2. **Guntur IRR Loop Phase III:** Confirmed **90% ROW clearance** but is challenged by a **pending 10% section near Palakaluru**.\n\n3. **Amaravati E6 Road:** **Road Formation (initial earthwork) is 100% complete** for the entire corridor, enabling the next phase, but minor land pockets remain at intersections.",
     "tags": [
-      "Amaravati Capital City Development Program",
-      "31 December 2024",
-      "Document: Package - 3 (Neerukonda Reservior)",
-      "Environmental"
+      "Milestone Achievement",
+      "Land Clearance",
+      "ROW Clearance",
+      "CC Lining"
     ]
   },
   {
-    "id": "insight_I2",
-    "title": "Comprehensive Criteria Focus on Bidder Capability",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "The qualification criteria for bidders are comprehensive, focusing on financial stability, past performance, and technical capacity.",
-    "type": "DOCUMENT",
+    "id": "insight_3",
+    "title": "Operational and Strategic Risk Mitigation in Amara...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Operational and Strategic Risk Mitigation in Amaravati Projects",
+    "user_question": "How are the Amaravati E6 Road and Airport projects addressing their distinct challenges related to utility conflicts and future concession structuring?",
+    "detailed_answer": "The two Amaravati projects are mitigating risks specific to their phases:\n\n1.  **Amaravati E6 Road (Operational Risk):** This project experienced a **3-week delay** due to **unmapped utilities**, impacting the critical **Utility Ducting (55% complete)**. The mitigation includes GPR surveys and a mandate for immediate completion of ducting.\n\n2.  **Amaravati Greenfield Airport (Strategic Risk):** The 55%-complete consultancy phase requires finalizing documents for its future **PPP/Concession** model. The consultant must prepare the **Risk Allocation Matrix** and conduct a **sensitivity analysis** on terminal costs to solidify the financial model.",
     "tags": [
-      "Amaravati Capital City Development Program",
-      "31 December 2024",
-      "Document: Package - 3 (Neerukonda Reservior)",
-      "Qualification Criteria"
+      "Operational Risk",
+      "Strategic Planning",
+      "Utility Conflicts",
+      "PPP/Concession"
     ]
   },
   {
-    "id": "insight_I1",
-    "title": "Strict Bidding Process Ensures Bidder Credibility",
-    "updatedAt": "2025-09-23T15:03:28.351256",
-    "summary": "The bidding process has strict financial and security requirements to ensure the bidder's capability and commitment.",
-    "type": "DOCUMENT",
+    "id": "insight_2",
+    "title": "Critical Path Dependency on Regulatory & Quality C...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Critical Path Dependency on Regulatory & Quality Compliance",
+    "user_question": "Which two construction projects are facing imminent threats to their schedule based on external approvals or internal quality mandates, and what are the mandatory corrective actions?",
+    "detailed_answer": "The Polavaram and Guntur projects are both facing critical compliance hurdles:\n\n1.  **Polavaram LMC Bridge:** The project is physically ready (girders certified) but is blocked by the need for regulatory approval for the **night block traffic diversion plan** to launch girders over the active NH-216.\n\n2.  **Guntur IRR Loop Phase III:** Progress is stalled by a **mandatory quality failure**. The IE issued only provisional acceptance of the initial subgrade (5% progress) and demanded **cross-slope rectification**, preventing the commencement of the next layer.",
     "tags": [
-      "Amaravati Capital City Development Program",
-      "31 December 2024",
-      "Document: Package - 3 (Neerukonda Reservior)",
-      "Financials"
+      "Critical Path",
+      "Regulatory Compliance",
+      "Quality Control",
+      "Polavaram LMC Bridge"
+    ]
+  },
+  {
+    "id": "insight_1",
+    "title": "Consolidated Infrastructure Portfolio Status and S...",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Consolidated Infrastructure Portfolio Status and Strategic Focus Areas",
+    "user_question": "What is the overall status of the four major infrastructure projects, and which require immediate management attention based on current risks?",
+    "detailed_answer": "The portfolio is actively managed across **four major projects** spanning three phases: **Advanced Construction** (Polavaram LMC Bridge, 45% complete on foundation), **Foundational Construction** (Guntur IRR Phase III and Amaravati E6 Road, 5%-20.5% complete), and **Strategic Planning** (Amaravati Airport, ~55% complete). The portfolio's immediate attention is split between resolving **critical regulatory bottlenecks** (Polavaram) and ensuring **foundational quality and land clearance** compliance (Guntur IRR). The Amaravati projects focus on mitigating utility delays (E6 Road) and finalizing strategic financial models (Airport).",
+    "tags": [
+      "Portfolio Summary",
+      "Status Overview",
+      "Critical Attention",
+      "Polavaram"
     ]
   }
 ]
@@ -373,6 +392,51 @@ Get detailed insight by ID.
 }
 ```
 
+### Upload Endpoints
+#### ``POST /upload``
+**Request**
+```
+multipart/form-data
+```
+
+**Response**
+```json
+{
+  "document_id": "7e8e1ef877f9535dc6faa9b0015d9d42",
+  "chat_id": "e0174c48-7d20-431e-a1fe-8d261d5e426b"
+}
+```
+#### ``POST /upload/ask``
+**Request**
+```json
+{
+  "document_ids": [
+    "string"
+  ],
+  "question": "string",
+  "prior_history": [
+    {
+      "question": "string",
+      "answer": "string"
+    }
+  ]
+}
+```
+**Response**
+```json
+{
+  "question": "what are some questions based on this data",
+  "answer": "Some questions based on this data could be:",
+  "processing_time": 4.532000000006519,
+  "follow_up_questions": [
+    "What are the key unresolved issues related to the N1 Trunk Infrastructure project based on the meeting minutes?",
+    "How are the responsibilities and action items distributed among the officers involved in the project?",
+    "What are the specific timelines set for completing various tasks within the project according to the meeting minutes?"
+  ]
+}
+```
+
+
 ## Data Models
 
 ### Request Models
@@ -385,19 +449,20 @@ class QuestionRequest(BaseModel):
     chat_type: Literal["question", "insight"] = "question" 
 ```
 
-#### `InsightResponse`
+#### `FileUploadQuestionsRequest`
 ```python
-# Response model for listing insights
-class InsightResponse(BaseModel):
-    id: str
-    title: str
-    updatedAt: str
-    summary: str
-    type: str
-    tags: list[str]
-   
 
+class QAPair(BaseModel):
+    question: str
+    answer: str
+
+class FileUploadQuestionRequest(BaseModel):
+    document_ids: Optional[List[str]] = None
+    question: str
+    prior_history: Optional[List[QAPair]] = None  # client-managed lightweight context
 ```
+
+
 
 ### Response Models
 
@@ -411,12 +476,24 @@ class SearchResponse(BaseModel):
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None   # NEW (returned only when created)
 ```
+#### `InsightResponse`
+```python
+# Response model for listing insights
+class InsightResponse(BaseModel):
+    id: str
+    title: str
+    updatedAt: str
+    summary: str
+    type: str
+    tags: list[str]
+   
 
+```
 #### `HistoryResponse`
 ```python
 class HistoryResponse(BaseModel):
     chat_id: str
-    chat_type: Literal["question", "insight"]
+    chat_type: Literal["question", "insight","documentqna"]
     user_id: str
     chat_title: Optional[str] = None          # NEW: title outside the list
     history: List[HistoryItem]
@@ -427,6 +504,15 @@ class HistoryItem(BaseModel):
     answer: str
     ts: Optional[int] = None  # unix timestamp (user_id removed from each item)
 ```
+#### `FileUploadQuestionsResponse`
+```python
+class FileUploadQuestionResponse(BaseModel):
+    question: str
+    answer: str
+    processing_time: float
+    follow_up_questions: List[str]
+```
+
 
 ## Environment Variables
 
@@ -455,32 +541,38 @@ VECTOR_INDEX_NAME=questions_index
 
 #### `knowledge_bank` Collection
 ```json
-"_id":"ObjectId("68d0e1a5f87abd89b31a45a2")"
-"question_id":"Q5"
-"user_question":"What are the grounds for the forfeiture of a Bid Security?"
-"detailed_answer":"The Bid Security may be forfeited if a bidder withdraws, modifies, or …"
-"follow_up_question_1":"Can I submit a conditional bid?"
-"follow_up_question_2":"Who will pay for the cost of bidding?"
-"follow_up_question_3":"What are the common sections of a bidding document?"
-"question_embedding":Array (1536)
+{
+  "_id": {
+    "$oid": "68dbbd27a3c2a2948ed61d82"
+  },
+  "ID": "Q1",
+  "user_question": "What is the full tender reference number for the E6 Road Work Package VII?",
+  "detailed_answer": "The **Final Contract Value (FCV) is 46.56 Crore**. This value was achieved through the Reverse Tendering process, resulting in a **3.0% discount** from the Original Estimated Cost Value (ECV) of 48.00 Crore.",
+  "follow_up_question_1": "What is the total amount of the Performance Guarantee (PG) required from the contractor?",
+  "follow_up_question_2": "What is the contractual implication of the Reverse Tendering (L1) clauses on project quality?",
+  "follow_up_question_3": "What type of contract is being used for this project, and what does it entail?",
+  "tags": "['Finance', 'Contract', 'Cost', 'Risk', 'Guntur Irr Phase3.pdf']",
+  "updatedAt": "2025-09-30T11:21:11.576444",
+  "question_embedding": Array(1536)
+
+}
 ```
 
 #### `insights` Collection
 ```json
 {
   "_id": {
-    "$oid": "68d2257948c95f14c746e51c"
+    "$oid": "68db84b9193046d45d8faea0"
   },
-  "Insight ID": "insight_I1",
-  "insight": "The bidding process has strict financial and security requirements to ensure the bidder's capability and commitment.",
-  "detailed_answer": "Bidders must have a strong financial position, with liquid assets of at least Rs. 58.84 Cr.\nA non-refundable bid processing fee of Rs. 20,000 and a transaction fee of 0.03% of the Estimated Contract Value (ECV) are required.\nA Bid Security, typically in the form of a bank guarantee, is mandatory. A separate **Performance Security** (2.5% of contract value) and an **E&S Performance Security** (0.1% of contract value) are required after the contract is awarded.",
-  "follow_up_question_1": "What happens if a bidder fails to provide the required Performance Security or sign the contract?",
-  "follow_up_question_2": "What are the accepted forms of Bid Security?",
-  "follow_up_question_3": "What is the purpose of the 'Performance Security'?",
-  "tags": "[Amaravati Capital City Development Program', '31 December 2024', 'Document: Package - 3 (Neerukonda Reservior)', 'Financials', 'Security']",
-  "title": "Strict Bidding Process Ensures Bidder Credibility",
-  "type": "DOCUMENT",
-  "updatedAt": "2025-09-23T04:43:37.621828"
+  "Insight ID": "insight_1",
+  "insight": "Consolidated Infrastructure Portfolio Status and Strategic Focus Areas",
+  "detailed_answer": "The portfolio is actively managed across **four major projects** spanning three phases: **Advanced Construction** (Polavaram LMC Bridge, 45% complete on foundation), **Foundational Construction** (Guntur IRR Phase III and Amaravati E6 Road, 5%-20.5% complete), and **Strategic Planning** (Amaravati Airport, ~55% complete). The portfolio's immediate attention is split between resolving **critical regulatory bottlenecks** (Polavaram) and ensuring **foundational quality and land clearance** compliance (Guntur IRR). The Amaravati projects focus on mitigating utility delays (E6 Road) and finalizing strategic financial models (Airport).",
+  "tags": "['Portfolio Summary', 'Status Overview', 'Critical Attention', 'Polavaram', 'Guntur IRR', 'Amaravati E6', 'Amaravati Airport']",
+  "follow_up_question_1": "What is the exact deadline for the contractor to resolve the cross-slope rectification issue on the Guntur IRR Loop Phase III subgrade?",
+  "follow_up_question_2": "Has the necessary night block traffic diversion plan been submitted for the Polavaram LMC Bridge girder launching?",
+  "follow_up_question_3": "What is the total combined estimated contract value (ECV) for the Guntur IRR Loop Phase III and Amaravati E6 Road projects?",
+  "updatedAt": "2025-09-30T07:20:25.021100",
+  "user_question": "What is the overall status of the four major infrastructure projects, and which require immediate management attention based on current risks?"
 }
 ```
 

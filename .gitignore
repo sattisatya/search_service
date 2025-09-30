@@ -3,6 +3,7 @@
 venv/
 ENV/
 .python-version
+notebooks
 
 # Python
 __pycache__/

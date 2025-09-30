@@ -14,6 +14,7 @@ class SearchResponse(BaseModel):
     chat_id: str
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None
+    tags: List[str] = []
 
 class HistoryItem(BaseModel):
     question: str
@@ -22,9 +23,10 @@ class HistoryItem(BaseModel):
 
 class HistoryResponse(BaseModel):
     chat_id: str
-    chat_type: Literal["question", "insight", "ask"]   # added "ask"
+    chat_type: Literal["question", "insight", "documentqna"]   # added "documentqna"
     user_id: str
     chat_title: Optional[str] = None
+    document_ids: Optional[List[str]] = []  # NEW: include document ids associated with chat
     history: List[HistoryItem] = []
 
 class ChatSummary(BaseModel):
@@ -46,8 +48,9 @@ class InsightResponse(BaseModel):
     id: str
     title: str
     updatedAt: str
-    summary: str
-    type: str
+    insight: str
+    user_question: str
+    detailed_answer: str
     tags: list[str]
 
 
@@ -57,7 +60,6 @@ class FileUploadQuestionRequest(BaseModel):
     document_ids: Optional[List[str]] = None
     question: str
     chat_id: Optional[str] = None
-    chat_type: Literal["question", "insight", "ask"] = "ask"
 
 class FileUploadQuestionResponse(BaseModel):
     question: str

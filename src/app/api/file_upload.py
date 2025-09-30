@@ -42,21 +42,23 @@ openai_client = get_client()
 document_store: Dict[str, Dict] = {}
 
 async def process_document(file: UploadFile) -> str:
-    """Process uploaded document and store its content"""
+    """Process uploaded document and store its content (avoid re-inserting duplicates in MongoDB)"""
     try:
         content = await file.read()
-        
-        # Generate unique document ID
+
+        # Generate unique document ID (hash of bytes)
         doc_id = hashlib.md5(content).hexdigest()
-        
+
         # Extract text based on file type
         text = ""
-        if file.filename.lower().endswith('.pdf'):
+        fname = file.filename or ""
+        lname = fname.lower()
+        if lname.endswith('.pdf'):
             text = extract_pdf_text(io.BytesIO(content))
-        elif file.filename.lower().endswith('.docx'):
+        elif lname.endswith('.docx'):
             doc = Document(io.BytesIO(content))
-            text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
-        elif file.filename.lower().endswith('.txt'):
+            text = '\n'.join([p.text for p in doc.paragraphs])
+        elif lname.endswith('.txt'):
             text = content.decode('utf-8')
         else:
             raise HTTPException(status_code=400, detail="Unsupported file format")
@@ -64,26 +66,30 @@ async def process_document(file: UploadFile) -> str:
         # Store document info in memory
         created_date = datetime.utcnow().isoformat()
         document_store[doc_id] = {
-            'filename': file.filename,
+            'filename': fname,
             'upload_time': created_date,
             'content': text
         }
 
-        # Persist document into MongoDB collection "upload"
+        # Persist document into MongoDB collection "upload" only if not already present
         mongo_client, collection = connect_to_mongodb("upload")
         if mongo_client is not None and collection is not None:
             try:
-                doc_record = {
-                    "file_name": file.filename,
-                    "text": text,
-                    "id": doc_id,
-                    "created_date": created_date
-                }
-                collection.insert_one(doc_record)
-                # optional flag in memory store
-                document_store[doc_id]["saved_to_mongo"] = True
+                existing = collection.find_one({"id": doc_id})
+                if existing:
+                    # already stored
+                    document_store[doc_id]["saved_to_mongo"] = True
+                else:
+                    doc_record = {
+                        "file_name": fname,
+                        "text": text,
+                        "id": doc_id,
+                        "created_date": created_date
+                    }
+                    collection.insert_one(doc_record)
+                    document_store[doc_id]["saved_to_mongo"] = True
             except Exception:
-                # on failure, keep in-memory copy but do not block upload
+                # on failure, keep in-memory copy but mark not saved
                 document_store[doc_id]["saved_to_mongo"] = False
             finally:
                 try:
@@ -93,6 +99,8 @@ async def process_document(file: UploadFile) -> str:
 
         return doc_id
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")
 
@@ -106,6 +114,15 @@ async def upload_file(file: UploadFile = File(...), chat_id: Optional[str] = Non
 
     # create a new chat session for this document with "ask" chat type
     chat_id = chat_id or str(uuid.uuid4())
+
+    # Persist document id into chat meta for quick rehydration (chat_type = "upload")
+    try:
+        # title is optional; store filename for quick UI hint
+        update_chat_meta_on_message(chat_id, "documentqna", title=f"Upload: {file.filename}", document_ids=[doc_id])
+        update_chat_order("documentqna", chat_id)
+    except Exception:
+        pass
+
     return {"document_id": doc_id, "chat_id": chat_id}
 
 # Update the ask_question endpoint to accept multiple document ids via body OR query params
@@ -116,6 +133,7 @@ async def ask_question(request: FileUploadQuestionRequest):
     If request.document_ids is provided and non-empty -> fetch those docs.
     If omitted or empty -> skip Mongo lookup (no error) and proceed without document context.
     """
+
     start_time = asyncio.get_event_loop().time()
 
     ids = request.document_ids or []          # optional now
@@ -124,11 +142,44 @@ async def ask_question(request: FileUploadQuestionRequest):
         raise HTTPException(status_code=400, detail="Question text is required")
 
     chat_id_final = request.chat_id or str(uuid.uuid4())
-    chat_type_final = request.chat_type or "ask"
-    if chat_type_final not in ("ask", "question", "insight"):
-        chat_type_final = "ask"
+    chat_type_final = "documentqna"
+    # allow 'upload' as a valid chat_type so we can store/retrieve doc meta there
+    # if chat_type_final not in ("documentqna", "question", "insight"):
+    #     chat_type_final = "documentqna"
 
     list_key = redis_key(chat_id_final, chat_type_final)
+
+    # --- NEW: if caller did not supply ids, try to recover from Redis meta or recent history ---
+    if not ids:
+        try:
+            meta_raw = redis_client.get(chat_meta_key(chat_id_final, chat_type_final))
+            if meta_raw:
+                meta = json.loads(meta_raw)
+                meta_ids = meta.get("document_ids", [])
+                if isinstance(meta_ids, list) and meta_ids:
+                    ids = meta_ids
+        except Exception:
+            pass
+
+    # also scan last N history entries for document_ids as a last-resort
+    if not ids:
+        try:
+            history_raw = redis_client.lrange(list_key, -10, -1)  # last 10 entries
+            found = []
+            for h in history_raw:
+                try:
+                    obj = json.loads(h)
+                    if isinstance(obj.get("document_ids"), list):
+                        for d in obj.get("document_ids", []):
+                            if d and d not in found:
+                                found.append(d)
+                except Exception:
+                    continue
+            if found:
+                ids = found
+        except Exception:
+            pass
+    # --- end new block ---
 
     documents_content: List[str] = []
     documents_found = 0
@@ -246,7 +297,8 @@ User Question: {q_text}
                     title = meta.get("title")
                 except Exception:
                     title = None
-        update_chat_meta_on_message(chat_id_final, chat_type_final, title)
+        # pass document ids so meta stays in sync with this chat activity
+        update_chat_meta_on_message(chat_id_final, chat_type_final, title, document_ids=ids)
         update_chat_order(chat_type_final, chat_id_final)
     except Exception:
         pass

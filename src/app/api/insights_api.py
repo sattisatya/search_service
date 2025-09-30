@@ -23,10 +23,11 @@ async def get_insights():
         cursor = collection.find({}, {
             "Insight ID": 1,
             "insight": 1,
+            "user_question": 1,
+            "detailed_answer": 1,
             "tags": 1,
-            "type": 1,
             "updatedAt": 1,
-            "title": 1
+
         }).sort([("_id", -1)])
 
         for doc in cursor:
@@ -54,8 +55,10 @@ async def get_insights():
                 id=doc.get("Insight ID", ""),
                 title=doc.get("title", doc.get("insight", "")[:50] + "..."),
                 updatedAt=updated_at_str,
-                summary=doc.get("insight", ""),
-                type=doc.get("type", "DOCUMENT"),
+                insight=doc.get("insight", ""),
+                user_question=doc.get("user_question", ""),
+                detailed_answer=doc.get("detailed_answer", ""),
+                # type=doc.get("type", "DOCUMENT"),
                 tags=tags[:4]  # Limit to 4 tags
             )
             )

@@ -14,3 +14,4 @@ def connect_to_mongodb(collection_name: str) -> Tuple[Optional[MongoClient], Opt
     except Exception:
         return None, None
     
+

@@ -59,6 +59,7 @@ async def search_question(request: QuestionRequest):
                     "follow_up_question_1": 1,
                     "follow_up_question_2": 1,
                     "follow_up_question_3": 1,
+                    "tags": 1,
                     "similarity_score": 1
                 }
             }
@@ -67,6 +68,11 @@ async def search_question(request: QuestionRequest):
         if not results:
             raise HTTPException(status_code=404, detail="No matches")
         best = results[0]
+        raw_tags = best.get("tags", "")
+        if isinstance(raw_tags, str) and raw_tags.startswith("[") and raw_tags.endswith("]"):
+            tags = [t.strip(" '\"") for t in raw_tags[1:-1].split(",") if t.strip(" '\"")]
+        else:
+            tags = [t.strip() for t in str(raw_tags).split(",") if t.strip()]
 
         follow_up_questions = []
         for i in range(1, 4):
@@ -140,7 +146,8 @@ Provide the best possible answer using prior context if helpful. Be concise and 
             follow_up_questions=follow_up_questions,
             chat_id=chat_id,
             chat_type=chat_type,
-            title=title
+            title=title,
+            tags=tags
         )
     finally:
         if mongo_client:
