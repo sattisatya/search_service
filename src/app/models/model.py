@@ -6,6 +6,7 @@ class QuestionRequest(BaseModel):
     question: str
     chat_id: Optional[str] = None
     chat_type: Literal["question", "insight"] = "question"
+    document_ids: Optional[List[str]] = None   # transient only
 
 class SearchResponse(BaseModel):
     question: str
@@ -23,10 +24,9 @@ class HistoryItem(BaseModel):
 
 class HistoryResponse(BaseModel):
     chat_id: str
-    chat_type: Literal["question", "insight"]   # added "documentqna"
+    chat_type: Literal["question", "insight"]
     user_id: str
     chat_title: Optional[str] = None
-    document_ids: Optional[List[str]] = []  # NEW: include document ids associated with chat
     history: List[HistoryItem] = []
 
 class ChatSummary(BaseModel):
@@ -42,8 +42,6 @@ class ChatListItem(BaseModel):
     last_answer: Optional[str] = None
     timestamp: Optional[str] = None
 
-
-# Updated Response model
 class InsightResponse(BaseModel):
     id: str
     title: str

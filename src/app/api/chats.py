@@ -30,7 +30,6 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
 
     user_id = "admin"
     chat_title: Optional[str] = None
-    document_ids = []  # collect document ids from meta if present
 
     meta_raw = redis_client.get(chat_meta_key(chat_id, chat_type))
     if meta_raw:
@@ -38,9 +37,6 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
             meta = json.loads(meta_raw)
             user_id = meta.get("user_id", user_id)
             chat_title = meta.get("title")
-            doc_ids = meta.get("document_ids", [])
-            if isinstance(doc_ids, list):
-                document_ids = doc_ids
         except Exception:
             pass
 
@@ -69,8 +65,7 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
         meta_save = {
             "title": chat_title or "Conversation",
             "created": iso_utc_now(),
-            "user_id": user_id,
-            "document_ids": []
+            "user_id": user_id
         }
         redis_client.set(chat_meta_key(chat_id, chat_type), json.dumps(meta_save))
 
@@ -79,9 +74,7 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
         chat_type=chat_type,
         user_id=user_id,
         chat_title=chat_title,
-        document_ids=document_ids,
         history=history_items
-
     )
 
 # update_chat_meta_on_message imported from redis_service
