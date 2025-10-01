@@ -46,23 +46,23 @@ async def search_question(request: QuestionRequest):
         if prior_doc_ids:
             doc_snippets = []
             up_client, up_coll = connect_to_mongodb("upload")
-            if up_client and up_coll:
-                try:
-                    cursor_docs = up_coll.find({"id": {"$in": prior_doc_ids}}, {"id": 1, "file_name": 1, "text": 1})
-                    for d in cursor_docs:
-                        text = (d.get("text", "") or "").strip()
-                        # truncate to avoid token overflow
-                        snippet = text
-                        doc_snippets.append(
-                            f"[DOC {d.get('id')} | {d.get('file_name','Unnamed')}]\n{snippet}"
-                        )
-                except Exception:
-                    pass
-                finally:
-                    try:
-                        up_client.close()
-                    except Exception:
-                        pass
+            # Must compare explicitly with None; pymongo Collection forbids truthiness checks
+            if up_client is not None and up_coll is not None:
+                 try:
+                     cursor_docs = up_coll.find({"id": {"$in": prior_doc_ids}}, {"id": 1, "file_name": 1, "text": 1})
+                     for d in cursor_docs:
+                         text = (d.get("text", "") or "").strip()
+                         snippet = text
+                         doc_snippets.append(
+                             f"[DOC {d.get('id')} | {d.get('file_name','Unnamed')}]\n{snippet}"
+                         )
+                 except Exception:
+                     pass
+                 finally:
+                     try:
+                         up_client.close()
+                     except Exception:
+                         pass
             if doc_snippets:
                 doc_context_block = "\n\n".join(doc_snippets)
 
@@ -128,7 +128,7 @@ Retrieved answer (context):
 
 Your detailed, bulleted answer:
 """
-
+        print(prompt)
         llm_resp = chat_completion(
             openai_client,
             model="gpt-3.5-turbo",
