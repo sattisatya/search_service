@@ -98,7 +98,7 @@ def to_iso(val) -> str:
 
 def update_chat_meta_on_message(chat_id: str, chat_type: str, title: Optional[str] = None):
     """
-    Update chat meta (no document id storage).
+    Update chat meta (preserves existing document_ids).
     """
     key = chat_meta_key(chat_id, chat_type)
     now_iso = iso_utc_now()
@@ -117,9 +117,7 @@ def update_chat_meta_on_message(chat_id: str, chat_type: str, title: Optional[st
     else:
         meta.setdefault("title", "Conversation")
     meta.setdefault("user_id", "admin")
-    # Remove any legacy document_ids
-    if "document_ids" in meta:
-        meta.pop("document_ids", None)
+    # DO NOT remove document_ids anymore (preserve if present)
     redis_client.set(key, json.dumps(meta))
     return meta
 

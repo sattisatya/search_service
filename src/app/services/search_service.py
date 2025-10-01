@@ -79,7 +79,7 @@ User question:
 
     llm_resp = chat_completion(
         openai_client,
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "Helpful technical assistant that never fabricates unsupported facts."},
             {"role": "user", "content": prompt}
@@ -188,7 +188,7 @@ Your detailed, bulleted answer:
 """
     llm_resp = chat_completion(
         openai_client,
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "Helpful technical assistant."},
             {"role": "user", "content": prompt}

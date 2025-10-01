@@ -74,7 +74,8 @@ async def search_question(request: QuestionRequest):
             "question": request.question,
             "answer": final_answer,
             "ts": iso_utc_now(),
-            "tags": tags + (["vector_fallback"] if 'used_vector' in locals() and used_vector else [])
+            "tags": tags ,
+            "document_ids": doc_ids if doc_ids else []
         }))
 
         meta_key = chat_meta_key(chat_id, chat_type)
@@ -105,6 +106,8 @@ async def search_question(request: QuestionRequest):
                     title = "Conversation"
 
         update_chat_meta_on_message(chat_id, chat_type, title)
+        if doc_ids:                            # re-attach doc ids after title update
+            add_doc_ids_to_chat_meta(chat_id, chat_type, doc_ids)
         update_chat_order(chat_type, chat_id)
 
         return SearchResponse(
