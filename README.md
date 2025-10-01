@@ -60,31 +60,30 @@ Intelligent question answering with chat context.
 **Request:**
 ```json
 {
-  "question": "What is a C-ESMP and what does it include?",
+  "question": "string",
+  "chat_id": "string",
   "chat_type": "question",
-  "chat_id": "optional-chat-id"
+  "document_ids": [
+    "string"
+  ]
 }
 ```
 
 **Response:**
 ```json
 {
-  "question": "What is the full tender reference number for the E6 Road Work Package VII?",
-  "answer": "The full tender reference number for the E6 Road Work Package VII is not explicitly mentioned in the provided context.",
+  "question": "What are the key infrastructure components being addressed in the N1 Trunk Infrastructure Agreement?",
+  "answer": "- Construction of roads\n- Storm water drains\n- Water supply network\n- Sewerage network\n- Utility ducts for power & ICT\n- Reuse waterline\n- Pedestrian and cycle tracks\n- Avenue plantation\n- Street furniture",
   "follow_up_questions": [
-    "What is the total amount of the Performance Guarantee (PG) required from the contractor?",
-    "What is the contractual implication of the Reverse Tendering (L1) clauses on project quality?",
-    "What type of contract is being used for this project, and what does it entail?"
+    "What percentage of land has been acquired for the project, and which district has pending land acquisition?",
+    "What specific action items were assigned to the Superintendent Engineer and the Executive Engineer (APTransco) during the meeting?",
+    "When is the next review meeting scheduled, and where will it take place?"
   ],
-  "chat_id": "ef2c3244-75c7-40f9-be8c-1853125abdb2",
+  "chat_id": "bd74192e-70c2-436b-9ad6-13c5548726f8",
   "chat_type": "question",
-  "title": "E6 Road Work Package VII Tender Number",
+  "title": "Document Overview",
   "tags": [
-    "Finance",
-    "Contract",
-    "Cost",
-    "Risk",
-    "Guntur Irr Phase3.pdf"
+    "MoM_N1_Trunk_Infra_11Aug2025_MoM.pdf"
   ]
 }
 ```
@@ -95,26 +94,41 @@ Retrieve conversation history for a session.
 **Response:**
 ```json
 {
-  "chat_id": "insight_I10",
+  "chat_id": "insight_36",
   "chat_type": "insight",
   "user_id": "admin",
-  "chat_title": "Leveraging Internal and External Expertise for Challenges",
+  "chat_title": "Contractor Mobilization Speed and Timeline Trade-Off Stra...",
   "history": [
     {
-      "question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
-      "answer": "The project team is effectively utilizing internal and external expertise to address challenges, fostering a collaborative problem-solving approach while maintaining quality control through unbiased third-party assessments and engaging multiple stakeholders for comprehensive project consideration.",
-      "ts": "2025-09-23T15:08:06Z"
+      "question": "How quickly did the contractor achieve initial mobilization, and what was the trade-off strategy used to maintain the 24-month project timeline despite land acquisition delays?",
+      "answer": "- 90% mobilization (plant, machinery, site office) achieved by April 18, 2025\n- Only 95% of Right-of-Way (ROW) cleared by that time, with a 100m commercial stretch pending eviction\n- Project Director directed contractor to immediately begin work in cleared segments to offset delays\n- Strategy helped maintain the March 2027 completion target\n- 20.5% physical progress achieved by September 2025\n- Approximately 25% of the total project timeline had elapsed by September 2025",
+      "ts": "2025-10-01T12:14:55Z",
+      "tags": [
+        "Mobilization",
+        "Timeline",
+        "Project Management",
+        "Land Clearance",
+        "Physical Progress",
+        "Amaravati Meetings Log.pdf",
+        "Amaravati E6 Project.pdf"
+      ]
     },
     {
-      "question": "The project team is leveraging both internal and external expertise to address challenges, with a collaborative approach to problem-solving and quality control.",
-      "answer": "The project team is effectively leveraging both internal and external expertise to address challenges, promoting a collaborative problem-solving approach while ensuring quality control through unbiased third-party assessments and engaging multiple stakeholders for comprehensive project consideration. Internal teams like the Chief Engineer's office collaborate with external parties, such as the Project Supervision Consultant, to address schedule slippage. Third-party consultants provide unbiased quality reports before milestone payments, and discussions include stakeholders like the Commissioner, Chief Engineer, Finance Officer, and Legal Advisor to consider all project aspects.",
-      "ts": "2025-09-23T15:07:58Z"
+      "question": "What was the total physical progress achieved by the final review meeting on December 15, 2026?",
+      "answer": "- The key action item for APADCL was to issue land demarcation instruction for Site A to the State Department",
+      "ts": "2025-10-01T12:18:46Z",
+      "tags": [
+        "Action Item",
+        "Site Selection",
+        "Land",
+        "Amaravati Airport Meetings.pdf"
+      ]
     }
   ]
 }
 ```
 
-#### `GET /chats?include_insight=true&include_question=true&include_documentqna=true'`
+#### `GET /chats?include_insight=true&include_question=true'`
 List all active session IDs.
 
 **Response:**
@@ -379,16 +393,25 @@ Get detailed insight by ID.
 **Response:**
 ```json
 {
-  "question": "What additional documents must a bidder submit?",
-  "answer": "Based on the prior context provided, in addition to the documents mentioned, bidders must also submit a plan detailing their engagement of specialized agencies for specific work components.",
+  "question": "How quickly did the contractor achieve initial mobilization, and what was the trade-off strategy used to maintain the 24-month project timeline despite land acquisition delays?",
+  "answer": "- 90% mobilization (plant, machinery, site office) achieved by April 18, 2025\n- Only 95% of Right-of-Way (ROW) cleared by that time, with a 100m commercial stretch pending eviction\n- Project Director directed contractor to immediately begin work in cleared segments to offset delays\n- Strategy helped maintain the March 2027 completion target\n- 20.5% physical progress achieved by September 2025\n- Approximately 25% of the total project timeline had elapsed by September 2025",
   "follow_up_questions": [
-    "What is a C-ESMP and what does it include?",
-    "How is the bid evaluated?",
-    "What are the rules regarding the use of bidding forms?"
+    "Which specific government entity was tasked with securing the final land clearance?",
+    "What was the total physical progress achieved by the final review meeting on December 15, 2026?",
+    "What were the final items on the project's punch list?"
   ],
-  "chat_id": "insight_I10",
+  "chat_id": "insight_36",
   "chat_type": "insight",
-  "title": "Leveraging Internal and External Expertise for Challenges"
+  "title": "Contractor Mobilization Speed and Timeline Trade-Off Stra...",
+  "tags": [
+    "Mobilization",
+    "Timeline",
+    "Project Management",
+    "Land Clearance",
+    "Physical Progress",
+    "Amaravati Meetings Log.pdf",
+    "Amaravati E6 Project.pdf"
+  ]
 }
 ```
 
@@ -402,39 +425,10 @@ multipart/form-data
 **Response**
 ```json
 {
-  "document_id": "7e8e1ef877f9535dc6faa9b0015d9d42",
-  "chat_id": "e0174c48-7d20-431e-a1fe-8d261d5e426b"
+  "document_id": "7e8e1ef877f9535dc6faa9b0015d9d42"
 }
 ```
-#### ``POST /upload/ask``
-**Request**
-```json
-{
-  "document_ids": [
-    "string"
-  ],
-  "question": "string",
-  "prior_history": [
-    {
-      "question": "string",
-      "answer": "string"
-    }
-  ]
-}
-```
-**Response**
-```json
-{
-  "question": "what are some questions based on this data",
-  "answer": "Some questions based on this data could be:",
-  "processing_time": 4.532000000006519,
-  "follow_up_questions": [
-    "What are the key unresolved issues related to the N1 Trunk Infrastructure project based on the meeting minutes?",
-    "How are the responsibilities and action items distributed among the officers involved in the project?",
-    "What are the specific timelines set for completing various tasks within the project according to the meeting minutes?"
-  ]
-}
-```
+
 
 
 ## Data Models
@@ -445,24 +439,10 @@ multipart/form-data
 ```python
 class QuestionRequest(BaseModel):
     question: str
-    chat_id: Optional[str] = None # Optional: Session ID (auto-generated if not provided)
-    chat_type: Literal["question", "insight"] = "question" 
+    chat_id: Optional[str] = None
+    chat_type: Literal["question", "insight"] = "question"
+    document_ids: Optional[List[str]] = None   # transient only
 ```
-
-#### `FileUploadQuestionsRequest`
-```python
-
-class QAPair(BaseModel):
-    question: str
-    answer: str
-
-class FileUploadQuestionRequest(BaseModel):
-    document_ids: Optional[List[str]] = None
-    question: str
-    prior_history: Optional[List[QAPair]] = None  # client-managed lightweight context
-```
-
-
 
 ### Response Models
 
@@ -471,38 +451,14 @@ class FileUploadQuestionRequest(BaseModel):
 class SearchResponse(BaseModel):
     question: str
     answer: str
-    follow_up_questions: List[str]
-    chat_id: str                  # NEW (returned only when created)
+    follow_up_questions: List[str] = []
+    chat_id: str
     chat_type: Literal["question", "insight"]
-    title: Optional[str] = None   # NEW (returned only when created)
-```
-#### `FileUploadQuestionsRequest`
-```python
+    title: Optional[str] = None
+    tags: List[str] = []
 
-class QAPair(BaseModel):
-    question: str
-    answer: str
-
-class FileUploadQuestionRequest(BaseModel):
-    document_ids: Optional[List[str]] = None
-    question: str
-    prior_history: Optional[List[QAPair]] = None  # client-managed lightweight context
 ```
 
-
-
-### Response Models
-
-#### `SearchResponse`
-```python
-class SearchResponse(BaseModel):
-    question: str
-    answer: str
-    follow_up_questions: List[str]
-    chat_id: str                  # NEW (returned only when created)
-    chat_type: Literal["question", "insight"]
-    title: Optional[str] = None   # NEW (returned only when created)
-```
 #### `InsightResponse`
 ```python
 # Response model for listing insights
@@ -513,41 +469,24 @@ class InsightResponse(BaseModel):
     summary: str
     type: str
     tags: list[str]
-   
-
 ```
 #### `HistoryResponse`
 ```python
 class HistoryResponse(BaseModel):
     chat_id: str
-    chat_type: Literal["question", "insight","documentqna"]
+    chat_type: Literal["question", "insight"]
     user_id: str
-    chat_title: Optional[str] = None          # NEW: title outside the list
-    history: List[HistoryItem]
-
+    chat_title: Optional[str] = None
+    history: List[HistoryItem] = []
 
 class HistoryItem(BaseModel):
     question: str
     answer: str
-    ts: Optional[int] = None  # unix timestamp (user_id removed from each item)
-```
-#### `FileUploadQuestionsResponse`
-```python
-class FileUploadQuestionResponse(BaseModel):
-    question: str
-    answer: str
-    processing_time: float
-    follow_up_questions: List[str]
+    ts: Optional[str] = None
+    tags: List[str] = []          # NEW
 ```
 
-#### `FileUploadQuestionsResponse`
-```python
-class FileUploadQuestionResponse(BaseModel):
-    question: str
-    answer: str
-    processing_time: float
-    follow_up_questions: List[str]
-```
+
 
 
 ## Environment Variables
@@ -617,15 +556,35 @@ VECTOR_INDEX_NAME=questions_index
 #### Chat History Storage
 ```
 {
-  "chat_id": "53d67ea5-23e9-4356-b49c-4ffb72a8c2c7",
-  "chat_type": "question",
+  "chat_id": "insight_36",
+  "chat_type": "insight",
   "user_id": "admin",
-  "chat_title": "Understanding C-ESMP and its inclusions",
+  "chat_title": "Contractor Mobilization Speed and Timeline Trade-Off Stra...",
   "history": [
     {
-      "question": "What is a C-ESMP and what does it include?",
-      "answer": "The C-ESMP stands for Contractor's Environmental and Social Management Plan. It consists of Management Strategies and Implementation Plans (MSIPs) to manage environmental and social risks and impacts of a project. It must comply with specific E&S requirements, be reviewed every six months, and approved by the PMC and Employer before project commencement.",
-      "ts": 1758616706
+      "question": "How quickly did the contractor achieve initial mobilization, and what was the trade-off strategy used to maintain the 24-month project timeline despite land acquisition delays?",
+      "answer": "- 90% mobilization (plant, machinery, site office) achieved by April 18, 2025\n- Only 95% of Right-of-Way (ROW) cleared by that time, with a 100m commercial stretch pending eviction\n- Project Director directed contractor to immediately begin work in cleared segments to offset delays\n- Strategy helped maintain the March 2027 completion target\n- 20.5% physical progress achieved by September 2025\n- Approximately 25% of the total project timeline had elapsed by September 2025",
+      "ts": "2025-10-01T12:14:55Z",
+      "tags": [
+        "Mobilization",
+        "Timeline",
+        "Project Management",
+        "Land Clearance",
+        "Physical Progress",
+        "Amaravati Meetings Log.pdf",
+        "Amaravati E6 Project.pdf"
+      ]
+    },
+    {
+      "question": "What was the total physical progress achieved by the final review meeting on December 15, 2026?",
+      "answer": "- The key action item for APADCL was to issue land demarcation instruction for Site A to the State Department",
+      "ts": "2025-10-01T12:18:46Z",
+      "tags": [
+        "Action Item",
+        "Site Selection",
+        "Land",
+        "Amaravati Airport Meetings.pdf"
+      ]
     }
   ]
 }

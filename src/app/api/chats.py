@@ -57,6 +57,9 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
             data.pop("user_id", None)
             if isinstance(data.get("ts"), (int, float)):
                 data["ts"] = iso_utc_now()
+            # Ensure tags default
+            if "tags" not in data or not isinstance(data["tags"], list):
+                data["tags"] = []
             history_items.append(HistoryItem(**data))
         except Exception:
             continue

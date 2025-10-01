@@ -21,6 +21,7 @@ class HistoryItem(BaseModel):
     question: str
     answer: str
     ts: Optional[str] = None
+    tags: List[str] = []          # NEW
 
 class HistoryResponse(BaseModel):
     chat_id: str
@@ -50,8 +51,4 @@ class InsightResponse(BaseModel):
     user_question: str
     summary: str
     tags: list[str]
-
-
-
-# ---------- file-upload models ----------
 
