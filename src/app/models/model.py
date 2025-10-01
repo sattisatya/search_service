@@ -23,7 +23,7 @@ class HistoryItem(BaseModel):
 
 class HistoryResponse(BaseModel):
     chat_id: str
-    chat_type: Literal["question", "insight", "documentqna"]   # added "documentqna"
+    chat_type: Literal["question", "insight"]   # added "documentqna"
     user_id: str
     chat_title: Optional[str] = None
     document_ids: Optional[List[str]] = []  # NEW: include document ids associated with chat
@@ -50,24 +50,10 @@ class InsightResponse(BaseModel):
     updatedAt: str
     insight: str
     user_question: str
-    detailed_answer: str
+    summary: str
     tags: list[str]
 
 
 
 # ---------- file-upload models ----------
 
-class QAPair(BaseModel):
-    question: str
-    answer: str
-
-class FileUploadQuestionRequest(BaseModel):
-    document_ids: Optional[List[str]] = None
-    question: str
-    chat_id: Optional[str] = None
-
-class FileUploadQuestionResponse(BaseModel):
-    question: str
-    answer: str
-    processing_time: float
-    follow_up_questions: List[str]

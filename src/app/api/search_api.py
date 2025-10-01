@@ -38,6 +38,34 @@ async def search_question(request: QuestionRequest):
         raise HTTPException(status_code=500, detail="DB connection failed")
 
     try:
+        # Build prior conversation + collect any document ids from previous documentqna / upload interactions
+        chat_context, prior_doc_ids = build_chat_context(chat_id, chat_type, return_doc_ids=True)
+
+        # (Optional) fetch document contents to enrich prompt (pulled from 'upload' collection)
+        doc_context_block = "No prior documents referenced."
+        if prior_doc_ids:
+            doc_snippets = []
+            up_client, up_coll = connect_to_mongodb("upload")
+            if up_client and up_coll:
+                try:
+                    cursor_docs = up_coll.find({"id": {"$in": prior_doc_ids}}, {"id": 1, "file_name": 1, "text": 1})
+                    for d in cursor_docs:
+                        text = (d.get("text", "") or "").strip()
+                        # truncate to avoid token overflow
+                        snippet = text
+                        doc_snippets.append(
+                            f"[DOC {d.get('id')} | {d.get('file_name','Unnamed')}]\n{snippet}"
+                        )
+                except Exception:
+                    pass
+                finally:
+                    try:
+                        up_client.close()
+                    except Exception:
+                        pass
+            if doc_snippets:
+                doc_context_block = "\n\n".join(doc_snippets)
+
         query_embedding = get_embedding(request.question, openai_client)
         vector_index = os.getenv("VECTOR_INDEX_NAME", "questions_index")
 
@@ -80,17 +108,27 @@ async def search_question(request: QuestionRequest):
             if best.get(k):
                 follow_up_questions.append(best[k])
 
-        chat_context = build_chat_context(chat_id, chat_type)
+        prompt = f"""You are acting as a conversational agent for a high-value client demonstration.
 
-        prompt = f"""Previous conversation:
-{chat_context}
+Instructions:
+1.  **Content Source Priority:** The response MUST be generated directly and entirely from the 'Retrieved answer (context)' provided below. Assume this context is the definitive information provided by the UI's RAG system.
+2.  **Formatting Requirement:** The final answer MUST be delivered in a comprehensive, detailed **bulleted list** format. Each distinct piece of information (e.g., each component of a multi-part answer, or each fact) should be its own bullet point for maximum clarity.
+3.  **Prior Conversation Use:** Use the 'Previous conversation' only for essential contextual reference or minor conversational flow adjustments. For the content of the answer, strictly adhere to the 'Retrieved answer (context)'.
+
+Previous conversation:
+{chat_context or 'None'}
+
+Referenced documents (may be truncated):
+{doc_context_block}
 
 Current user question: {request.question}
 
 Retrieved answer (context):
 {best.get('detailed_answer','')}
 
-Provide the best possible answer using prior context if helpful. Be concise and accurate."""
+Your detailed, bulleted answer:
+"""
+
         llm_resp = chat_completion(
             openai_client,
             model="gpt-3.5-turbo",
@@ -109,7 +147,8 @@ Provide the best possible answer using prior context if helpful. Be concise and 
         item = {
             "question": request.question,
             "answer": final_answer,
-            "ts": iso_utc_now()
+            "ts": iso_utc_now(),
+            "document_ids": prior_doc_ids  # propagate any collected doc references
         }
         redis_client.rpush(list_key, json.dumps(item))
 
@@ -137,7 +176,8 @@ Provide the best possible answer using prior context if helpful. Be concise and 
                 else:
                     title = "Conversation"
 
-        update_chat_meta_on_message(chat_id, chat_type, title)
+        # Merge prior_doc_ids into meta so they persist
+        update_chat_meta_on_message(chat_id, chat_type, title, document_ids=prior_doc_ids)
         update_chat_order(chat_type, chat_id)
 
         return SearchResponse(

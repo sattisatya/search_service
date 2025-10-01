@@ -57,7 +57,7 @@ async def get_insights():
                 updatedAt=updated_at_str,
                 insight=doc.get("insight", ""),
                 user_question=doc.get("user_question", ""),
-                detailed_answer=doc.get("detailed_answer", ""),
+                summary=doc.get("detailed_answer", ""),
                 # type=doc.get("type", "DOCUMENT"),
                 tags=tags[:4]  # Limit to 4 tags
             )
@@ -68,3 +68,5 @@ async def get_insights():
     finally:
         if mongo_client:
             mongo_client.close()
+
+

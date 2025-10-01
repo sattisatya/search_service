@@ -11,8 +11,7 @@ redis_client = redis.Redis(host=redis_host, port=redis_port, db=0, decode_respon
 
 CHAT_ORDER_ZSET = "chat:order"  # member format: "<chat_type>:<chat_id>"
 # add the additional chat types you want handled when aggregating context/order
-ADDITIONAL_CHAT_TYPES = ["documentqna"]
-DEFAULT_CHAT_TYPES = ["question", "insight"] + ADDITIONAL_CHAT_TYPES
+DEFAULT_CHAT_TYPES = ["question", "insight"]
 
 def iso_utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -49,25 +48,73 @@ def is_orphan(chat_type: str, chat_id: str) -> bool:
         and not redis_client.exists(chat_meta_key(chat_id, chat_type))
     )
 
-def build_chat_context(chat_id: str, chat_type: Optional[str] = None) -> str:
+def build_chat_context(
+    chat_id: str,
+    chat_type: Optional[str] = None,
+    return_doc_ids: bool = False,
+    max_messages_per_type: int = 50
+):
+    """
+    Build a plain-text conversation context.
+    Optionally also return a de-duplicated ordered list of document_ids seen in:
+      - chat meta (document_ids)
+      - each history item field 'document_ids' (list)
+    Backwards compatible: by default returns only the context string.
+    If return_doc_ids=True returns (context_str, document_ids_list).
+    """
     keys = []
     if chat_type:
         keys.append(redis_key(chat_id, chat_type))
     else:
-        # include the additional chat type(s) when no specific type requested
         for t in DEFAULT_CHAT_TYPES:
             keys.append(redis_key(chat_id, t))
 
+    # Collect doc_ids from meta for each type
+    collected_doc_ids: List[str] = []
+    def merge_ids(new_ids):
+        if not new_ids:
+            return
+        for d in new_ids:
+            if d and d not in collected_doc_ids:
+                collected_doc_ids.append(d)
+
+    if chat_type:
+        meta_raw = redis_client.get(chat_meta_key(chat_id, chat_type))
+        if meta_raw:
+            try:
+                meta = json.loads(meta_raw)
+                merge_ids(meta.get("document_ids", []))
+            except Exception:
+                pass
+    else:
+        # gather meta from each type
+        for t in DEFAULT_CHAT_TYPES:
+            meta_raw = redis_client.get(chat_meta_key(chat_id, t))
+            if meta_raw:
+                try:
+                    meta = json.loads(meta_raw)
+                    merge_ids(meta.get("document_ids", []))
+                except Exception:
+                    continue
+
     parts = []
     for k in keys:
-        history = redis_client.lrange(k, 0, -1)
+        history = redis_client.lrange(k, -max_messages_per_type, -1)
         for item in history:
             try:
                 entry = json.loads(item)
-                parts.append(f"User: {entry.get('question','')}\nAssistant: {entry.get('answer','')}")
+                q = entry.get('question', '')
+                a = entry.get('answer', '')
+                parts.append(f"User: {q}\nAssistant: {a}")
+                if isinstance(entry.get("document_ids"), list):
+                    merge_ids(entry.get("document_ids"))
             except Exception:
                 continue
-    return "\n".join(parts)
+
+    context_str = "\n".join(parts)
+    if return_doc_ids:
+        return context_str, collected_doc_ids
+    return context_str
 
 def get_last_answer(chat_type: str, chat_id: str) -> Optional[str]:
     try:
