@@ -13,7 +13,8 @@ from ..services.redis_service import (
     chat_meta_key,
     build_chat_context,
     update_chat_meta_on_message,
-    update_chat_order
+    update_chat_order,
+    add_doc_ids_to_chat_meta   # <-- added
 )
 from ..services.mongo_service import connect_to_mongodb
 from ..services.openai_service import get_client, get_embedding, chat_completion, generate_chat_title
@@ -37,22 +38,35 @@ async def search_question(request: QuestionRequest):
 
     chat_context = build_chat_context(chat_id, chat_type)
 
-    # Transient document ids (not stored)
-    doc_ids = request.document_ids or []
+    doc_ids = []
+    try:
+        meta_raw = redis_client.get(chat_meta_key(chat_id, chat_type))
+        if meta_raw:
+            meta_obj = json.loads(meta_raw)
+            if isinstance(meta_obj.get("document_ids"), list):
+                doc_ids = meta_obj["document_ids"]
+    except Exception:
+        doc_ids = []
 
     mongo_client, collection = connect_to_mongodb(os.getenv("questions_collection_name", "knowledge_bank"))
     if mongo_client is None or collection is None:
         raise HTTPException(status_code=500, detail="DB connection failed")
 
     try:
-        # ----------------- If doc_ids provided: bypass vector search -----------------
+        used_vector = False
         if doc_ids:
-            final_answer, follow_up_questions, tags = document_search(doc_ids, request, chat_context, openai_client)
-
+            doc_answer, doc_follow, doc_tags, has_answer = document_search(doc_ids, request, chat_context, openai_client)
+            if has_answer:
+                final_answer = doc_answer
+                follow_up_questions = doc_follow
+                tags = doc_tags
+            else:
+                # Fallback to vector search
+                final_answer, follow_up_questions, tags = vector_search(request, chat_context, openai_client, collection)
+                used_vector = True
         else:
-            # ----------------- Original vector search flow -----------------
             final_answer, follow_up_questions, tags = vector_search(request, chat_context, openai_client, collection)
-        # ------------------------------------------------------------------
+            used_vector = True
 
         list_key = redis_key(chat_id, chat_type)
         is_first = redis_client.llen(list_key) == 0
@@ -60,7 +74,7 @@ async def search_question(request: QuestionRequest):
             "question": request.question,
             "answer": final_answer,
             "ts": iso_utc_now(),
-            "tags": tags              # NEW
+            "tags": tags + (["vector_fallback"] if 'used_vector' in locals() and used_vector else [])
         }))
 
         meta_key = chat_meta_key(chat_id, chat_type)

@@ -10,86 +10,102 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 
 
-def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: str, openai_client) -> Tuple[str, List[str], List[str]]:
-            # ----------------- If doc_ids provided: bypass vector search -----------------
-        # Build document context
-        doc_context_block = "No referenced documents."
-        snippets = []
-        doc_tags = []  # NEW: collect document names for tags
-        up_client, up_coll = connect_to_mongodb("upload")
-        if up_client is not None and up_coll is not None:
+def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: str, openai_client) -> Tuple[str, List[str], List[str], bool]:
+    # ----------------- If doc_ids provided: build document context -----------------
+    doc_context_block = "No referenced documents."
+    snippets = []
+    doc_tags = []
+    up_client, up_coll = connect_to_mongodb("upload")
+    if up_client is not None and up_coll is not None:
+        try:
+            cur = up_coll.find({"id": {"$in": doc_ids}}, {"id": 1, "file_name": 1, "text": 1})
+            for d in cur:
+                file_name = d.get("file_name") or "Unnamed"
+                if file_name not in doc_tags:
+                    doc_tags.append(file_name)
+                text = (d.get("text", "") or "").strip()
+                snippets.append(f"[DOC {d.get('id')} | {file_name}]\n{text}")
+        except Exception:
+            pass
+        finally:
             try:
-                cur = up_coll.find({"id": {"$in": doc_ids}}, {"id": 1, "file_name": 1, "text": 1})
-                for d in cur:
-                    file_name = d.get("file_name") or "Unnamed"
-                    # collect tag (dedupe later)
-                    if file_name not in doc_tags:
-                        doc_tags.append(file_name)
-                    text = (d.get("text", "") or "").strip()
-                    snippets.append(f"[DOC {d.get('id')} | {file_name}]\n{text}")
+                up_client.close()
             except Exception:
                 pass
-            finally:
-                try:
-                    up_client.close()
-                except Exception:
-                    pass
-        if snippets:
-            doc_context_block = "\n\n".join(snippets)
+    if snippets:
+        doc_context_block = "\n\n".join(snippets)
 
-        prompt = f"""You are an AI assistant. Answer STRICTLY from the reference documents below.
-If the answer (or any part of it) is not explicitly supported by the documents, respond exactly:
-"I cannot answer based on the provided documents."
+    prompt = f"""You are an AI assistant constrained to ONLY the provided reference documents.
 
-Instructions:
-1. Use ONLY facts explicitly present in the documents. No unstated assumptions, no outside knowledge.
-2. Be concise, professional, and use bullet points.
-3. Do NOT summarize beyond what is present—stay faithful to wording where critical.
-4. If documents conflict, state the conflict briefly.
-5. Never fabricate numbers, dates, or entities.
+Your first task: Determine if the documents contain sufficient explicit information to answer the user's question accurately (not partially, not by guess, not by outside knowledge).
 
-Follow-up questions:
-- Generate exactly three.
-- Each must be directly grounded in gaps, unresolved details, or natural next steps from the document content and (if relevant) prior conversation context.
-- Do NOT repeat the user question or prior follow-ups.
-- Avoid near-duplicates; each must explore a distinct angle.
-- If insufficient material for three meaningful follow-ups, still output three, but label uncertain ones with a prefix "(Exploratory)".
+HAS_ANSWER criteria (must be True ONLY if ALL are satisfied):
+1. The documents explicitly contain the key facts needed.
+2. No required fact must be inferred from outside knowledge.
+3. No critical ambiguity remains that would materially change the answer.
 
-Previous conversation (style only; do NOT invent new facts from it):
-{chat_context or 'None'}
+If any of the above are not met, set HAS_ANSWER: False.
 
-Reference documents (authoritative scope; truncated if long):
-{doc_context_block}
+If HAS_ANSWER is False you MUST:
+- Output: HAS_ANSWER: False
+- For ANSWER section output EXACTLY: "I cannot answer based on the provided documents."
+- Still produce 3 exploratory follow-up questions (label uncertain ones with (Exploratory)).
 
-User question:
-{request.question}
+If HAS_ANSWER is True:
+- Output: HAS_ANSWER: True
+- Provide a concise, professional, strictly evidence-grounded bulleted answer.
+- Do NOT invent or embellish.
+- If documents conflict, note the conflict briefly.
 
-Output format EXACTLY:
+ALWAYS follow this exact output template:
+
+HAS_ANSWER: True or False
 ANSWER:
-<bulleted answer or "I cannot answer based on the provided documents.">
-
+<bulleted answer OR "I cannot answer based on the provided documents.">
 FOLLOW_UP_QUESTIONS:
 1. ...
 2. ...
 3. ...
-"""
-        llm_resp = chat_completion(
-            openai_client,
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Helpful technical assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.4,
-            max_tokens=700
-        )
-        raw_content = llm_resp.choices[0].message.content.strip()
 
-        # Parse follow-up questions
-        follow_ups = []
-        if "FOLLOW_UP_QUESTIONS:" in raw_content:
-            ans_part, fu_part = raw_content.split("FOLLOW_UP_QUESTIONS:", 1)
-            answer_text = ans_part.replace("ANSWER:", "").strip()
+Previous conversation (style only; never a source of new facts):
+{chat_context or 'None'}
+
+Reference documents (authoritative scope; may be truncated):
+{doc_context_block}
+
+User question:
+{request.question}
+"""
+
+    llm_resp = chat_completion(
+        openai_client,
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Helpful technical assistant that never fabricates unsupported facts."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,
+        max_tokens=750
+    )
+    raw_content = llm_resp.choices[0].message.content.strip()
+
+    # Default parsing
+    has_answer = False
+    answer_text = raw_content
+    follow_up_questions: List[str] = []
+
+    # Extract HAS_ANSWER
+    m = re.search(r"HAS_ANSWER:\s*(True|False)", raw_content, re.IGNORECASE)
+    if m:
+        has_answer = m.group(1).lower() == "true"
+
+    # Split sections
+    if "ANSWER:" in raw_content:
+        after_answer = raw_content.split("ANSWER:", 1)[1]
+        if "FOLLOW_UP_QUESTIONS:" in after_answer:
+            ans_part, fu_part = after_answer.split("FOLLOW_UP_QUESTIONS:", 1)
+            answer_text = ans_part.strip()
+            # Parse follow-ups
             for line in fu_part.strip().splitlines():
                 line = line.strip()
                 if not line:
@@ -97,17 +113,18 @@ FOLLOW_UP_QUESTIONS:
                 if line[0].isdigit():
                     line = re.sub(r"^\d+[\).]?\s*", "", line)
                 if line:
-                    follow_ups.append(line)
-            follow_up_questions = follow_ups[:3]
-        else:
-            answer_text = raw_content
-            follow_up_questions = []
+                    follow_up_questions.append(line)
+            follow_up_questions = follow_up_questions[:3]
 
-        final_answer = answer_text
-        # Use document names as tags in doc-only flow
-        tags = doc_tags
+    # Clean answer_text if it still has HAS_ANSWER line
+    answer_text = re.sub(r"^HAS_ANSWER:\s*(True|False)\s*", "", answer_text, flags=re.IGNORECASE).strip()
 
-        return final_answer, follow_up_questions, tags
+    # If model failed format and we have no follow-ups, set empty list
+    if not follow_up_questions:
+        follow_up_questions = []
+
+    tags = doc_tags
+    return answer_text, follow_up_questions, tags, has_answer
 
 def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[str]]:
     doc_context_block = "No referenced documents."

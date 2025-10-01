@@ -123,6 +123,29 @@ def update_chat_meta_on_message(chat_id: str, chat_type: str, title: Optional[st
     redis_client.set(key, json.dumps(meta))
     return meta
 
+def add_doc_ids_to_chat_meta(chat_id: str, chat_type: str, doc_ids):
+    if not doc_ids:
+        return
+    key = chat_meta_key(chat_id, chat_type)
+    try:
+        existing_raw = redis_client.get(key)
+        if existing_raw:
+            try:
+                meta = json.loads(existing_raw)
+            except Exception:
+                meta = {}
+        else:
+            meta = {}
+        existing_ids = set(meta.get("document_ids", []))
+        # Preserve original order where possible, append new ones
+        new_ids = [d for d in doc_ids if d not in existing_ids]
+        if not new_ids:
+            return
+        meta["document_ids"] = meta.get("document_ids", []) + new_ids
+        redis_client.set(key, json.dumps(meta))
+    except Exception:
+        pass
+
 def delete_session(
     chat_id: str,
     chat_type: Optional[str] = None,

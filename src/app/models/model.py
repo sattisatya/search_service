@@ -1,12 +1,12 @@
+from typing_extensions import Literal
 from pydantic import BaseModel
-from typing import List, Optional, Literal
+from typing import List, Optional
 
 
 class QuestionRequest(BaseModel):
     question: str
     chat_id: Optional[str] = None
-    chat_type: Literal["question", "insight"] = "question"
-    document_ids: Optional[List[str]] = None   # transient only
+    chat_type: str = "question"
 
 class SearchResponse(BaseModel):
     question: str
@@ -25,10 +25,11 @@ class HistoryItem(BaseModel):
 
 class HistoryResponse(BaseModel):
     chat_id: str
-    chat_type: Literal["question", "insight"]
+    chat_type: str
     user_id: str
-    chat_title: Optional[str] = None
-    history: List[HistoryItem] = []
+    chat_title: Optional[str]
+    history: List[HistoryItem]
+    document_ids: List[str] = []   # <-- added
 
 class ChatSummary(BaseModel):
     chat_id: str
