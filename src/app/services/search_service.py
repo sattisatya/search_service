@@ -35,9 +35,14 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     if snippets:
         doc_context_block = "\n\n".join(snippets)
 
-    prompt = f"""You are an AI assistant constrained to ONLY the provided reference documents.
+    # JSON-enforcing prompt
+    # pre-escape previous conversation so the f-string expression contains no backslashes
+    prev_conv = (chat_context or 'None').replace('"', '\\"')
+    prompt = f"""
+You are an AI assistant constrained to ONLY the provided reference documents.
 
-Your first task: Determine if the documents contain sufficient explicit information to answer the user's question accurately (not partially, not by guess, not by outside knowledge).
+Your first task: Determine if the documents contain sufficient explicit information to answer the user's question accurately 
+(not partially, not by guess, not by outside knowledge).
 
 HAS_ANSWER criteria (must be True ONLY if ALL are satisfied):
 1. The documents explicitly contain the key facts needed.
@@ -46,29 +51,34 @@ HAS_ANSWER criteria (must be True ONLY if ALL are satisfied):
 
 If any of the above are not met, set HAS_ANSWER: False.
 
-If HAS_ANSWER is False you MUST:
-- Output: HAS_ANSWER: False
-- For ANSWER section output EXACTLY: "I cannot answer based on the provided documents."
-- Still produce 3 exploratory follow-up questions (label uncertain ones with (Exploratory)).
+Output Rules:
+The response MUST be valid JSON.
+Do not include explanations outside of JSON.
+Always use the exact structure below.
+
+If HAS_ANSWER is False:
+{{
+  "HAS_ANSWER": false,
+  "ANSWER": "I cannot answer based on the provided documents.",
+  "FOLLOW_UP_QUESTIONS": [],
+  "PREVIOUS_CONVERSATION": "{prev_conv}"
+}}
 
 If HAS_ANSWER is True:
-- Output: HAS_ANSWER: True
-- Provide a concise, professional, strictly evidence-grounded bulleted answer.
-- Do NOT invent or embellish.
-- If documents conflict, note the conflict briefly.
-
-ALWAYS follow this exact output template:
-
-HAS_ANSWER: True or False
-ANSWER:
-<bulleted answer OR "I cannot answer based on the provided documents.">
-FOLLOW_UP_QUESTIONS:
-1. ...
-2. ...
-3. ...
-
-Previous conversation (style only; never a source of new facts):
-{chat_context or 'None'}
+{{
+  "HAS_ANSWER": true,
+  "ANSWER": [
+    "1. First strictly evidence-grounded point",
+    "2. Second strictly evidence-grounded point",
+    "3. Third strictly evidence-grounded point"
+  ],
+  "FOLLOW_UP_QUESTIONS": [
+    "Question 1",
+    "Question 2",
+    "Question 3"
+  ],
+  "PREVIOUS_CONVERSATION": "{prev_conv}"
+}}
 
 Reference documents (authoritative scope; may be truncated):
 {doc_context_block}
@@ -81,53 +91,71 @@ User question:
         openai_client,
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "Helpful technical assistant that never fabricates unsupported facts."},
+            {"role": "system", "content": "Return ONLY valid JSON matching the required schema."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.3,
-        max_tokens=750
+        temperature=0.2,
+        max_tokens=900
     )
     raw_content = llm_resp.choices[0].message.content.strip()
 
-    # Default parsing
-    has_answer = False
-    answer_text = raw_content
-    follow_up_questions: List[str] = []
+    # ---------- JSON extraction / normalization ----------
+    def extract_json(txt: str) -> str:
+        # Strip code fences if present
+        if txt.startswith("```"):
+            # remove first and last fence
+            lines = [l for l in txt.splitlines() if not l.strip().startswith("```")]
+            txt = "\n".join(lines).strip()
+        # Heuristic: grab from first { to last }
+        if "{" in txt and "}" in txt:
+            start = txt.find("{")
+            end = txt.rfind("}")
+            return txt[start:end+1]
+        return txt
 
-    # Extract HAS_ANSWER
-    m = re.search(r"HAS_ANSWER:\s*(True|False)", raw_content, re.IGNORECASE)
-    if m:
-        has_answer = m.group(1).lower() == "true"
+    parsed = {}
+    json_str = extract_json(raw_content)
+    try:
+        parsed = json.loads(json_str)
+    except Exception:
+        # Fallback: attempt to fix common trailing commas
+        try:
+            json_str_fixed = re.sub(r",(\s*[}\]])", r"\1", json_str)
+            parsed = json.loads(json_str_fixed)
+        except Exception:
+            parsed = {}
 
-    # Split sections
-    if "ANSWER:" in raw_content:
-        after_answer = raw_content.split("ANSWER:", 1)[1]
-        if "FOLLOW_UP_QUESTIONS:" in after_answer:
-            ans_part, fu_part = after_answer.split("FOLLOW_UP_QUESTIONS:", 1)
-            answer_text = ans_part.strip()
-            # Parse follow-ups
-            for line in fu_part.strip().splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                if line[0].isdigit():
-                    line = re.sub(r"^\d+[\).]?\s*", "", line)
-                if line:
-                    follow_up_questions.append(line)
-            follow_up_questions = follow_up_questions[:3]
+    has_answer = bool(parsed.get("HAS_ANSWER") is True)
+    follow_up_questions = []
+    answer_text = ""
 
-    # Clean answer_text if it still has HAS_ANSWER line
-    answer_text = re.sub(r"^HAS_ANSWER:\s*(True|False)\s*", "", answer_text, flags=re.IGNORECASE).strip()
+    # ANSWER field: if list, join; if string, use directly
+    ans_field = parsed.get("ANSWER")
+    if isinstance(ans_field, list):
+        answer_text = "\n".join([str(x).strip() for x in ans_field if str(x).strip()])
+    elif isinstance(ans_field, str):
+        answer_text = ans_field.strip()
+    else:
+        answer_text = ""
 
-    # If model failed format and we have no follow-ups, set empty list
-    if not follow_up_questions:
+    fq_field = parsed.get("FOLLOW_UP_QUESTIONS")
+    if isinstance(fq_field, list):
+        follow_up_questions = [str(x).strip() for x in fq_field if str(x).strip()][:3]
+
+    # Fallbacks if JSON failed
+    if not parsed:
+        has_answer = False
+        answer_text = "I cannot answer based on the provided documents."
+        follow_up_questions = []
+
+    # Enforce no follow-ups when HAS_ANSWER is False
+    if not has_answer:
         follow_up_questions = []
 
     tags = doc_tags
     return answer_text, follow_up_questions, tags, has_answer
 
 def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[str]]:
-    doc_context_block = "No referenced documents."
     query_embedding = get_embedding(request.question, openai_client)
     vector_index = os.getenv("VECTOR_INDEX_NAME", "questions_index")
     pipeline = [
@@ -139,6 +167,7 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
             "limit": 1
         }},
         {"$addFields": {"similarity_score": {"$meta": "vectorSearchScore"}}},
+        {"$match": {"similarity_score": {"$gt": 0.75}}},
         {"$project": {
             "user_question": 1,
             "detailed_answer": 1,
@@ -150,8 +179,38 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
         }}
     ]
     results = list(collection.aggregate(pipeline))
+
     if not results:
-        raise HTTPException(status_code=404, detail="No matches")
+        # Send explicit "no relevant documents found" context to LLM (no follow-ups)
+        no_docs_prompt = f"""
+No relevant indexed documents were found for this query.
+
+Previous conversation (for tone only):
+{chat_context or 'None'}
+
+User question:
+{request.question}
+
+Instructions:
+Respond with exactly this sentence (no extra text, no bullets):
+I cannot answer based on stored knowledge: no relevant indexed documents were found. You may upload a document related to your question.
+"""
+        try:
+            llm_resp = chat_completion(
+                openai_client,
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "Follow instructions exactly."},
+                    {"role": "user", "content": no_docs_prompt}
+                ],
+                temperature=0.0,
+                max_tokens=60
+            )
+            final_answer = llm_resp.choices[0].message.content.strip()
+        except Exception:
+            final_answer = "I cannot answer based on stored knowledge: no relevant indexed documents were found. You may upload a document related to your question."
+        return final_answer, [], []
+
     best = results[0]
 
     raw_tags = best.get("tags", "")
@@ -160,31 +219,42 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
     else:
         tags = [t.strip() for t in str(raw_tags).split(",") if t.strip()]
 
-    follow_up_questions = []
+    follow_up_questions: List[str] = []
     for i in range(1, 4):
         k = f"follow_up_question_{i}"
         if best.get(k):
             follow_up_questions.append(best[k])
 
-    prompt = f"""You are acting as a conversational agent for a high-value client demonstration.
+    prompt = f"""
+You are acting as a conversational agent for a high-value client demonstration. 
+Your goal is to synthesize the provided context into a detailed and professional answer.
 
-Instructions:
-1. Use ONLY the 'Retrieved answer (context)' for factual content.
-2. Provide a detailed bulleted list.
-3. Prior conversation is for style continuity only.
+### Instructions:
+1. **Content Source Priority:** 
+   - The response MUST be generated directly and entirely from the 'Retrieved answer (context)' provided below. 
+   - Treat this as the sole authoritative source. Do NOT use outside knowledge or inference.
+2. **Formatting Requirement:** 
+   - The final answer MUST be structured as a comprehensive numbered list. 
+   - Each distinct fact, step, or component of the answer MUST be its own numbered point.
+   - Use professional, precise wording; avoid fluff or repetition.
+3. **Previous Conversation Usage:** 
+   - Use the 'Previous conversation' only to maintain conversational continuity or flow. 
+   - Do NOT add new content from it; only minor adjustments for tone or context.
 
-Previous conversation:
-{chat_context or 'None'}
+---
 
-Referenced documents:
-(No documents supplied)
+**Previous conversation:**
+{chat_context}
 
-Current user question: {request.question}
+**Current user question:** 
+{request.question}
 
-Retrieved answer (context):
+**Retrieved answer (context):**
 {best.get('detailed_answer','')}
 
-Your detailed, bulleted answer:
+---
+
+**Your detailed, numbered answer:**
 """
     llm_resp = chat_completion(
         openai_client,
@@ -193,7 +263,7 @@ Your detailed, bulleted answer:
             {"role": "system", "content": "Helpful technical assistant."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.7,
+        temperature=0.6,
         max_tokens=500
     )
     final_answer = llm_resp.choices[0].message.content.strip()

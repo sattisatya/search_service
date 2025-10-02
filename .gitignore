@@ -5,12 +5,14 @@ ENV/
 .python-version
 notebooks
 
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .pytest_cache/
+tests/
 
 # Excel and Data files
 *.xlsx
