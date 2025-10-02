@@ -9,6 +9,38 @@ from ..services.redis_service import redis_client, redis_key, chat_meta_key, iso
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
+# Add: limit previous conversation included in LLM prompts
+CHAT_CONTEXT_MAX_TURNS = int(os.getenv("CHAT_CONTEXT_MAX_TURNS", "4"))
+CHAT_CONTEXT_MAX_CHARS = int(os.getenv("CHAT_CONTEXT_MAX_CHARS", "3000"))
+
+def _limit_chat_context(chat_context: str, max_turns: int = CHAT_CONTEXT_MAX_TURNS, max_chars: int = CHAT_CONTEXT_MAX_CHARS) -> str:
+    """
+    Keep only the most recent max_turns (User/Assistant pairs) and cap total chars.
+    Expects chat_context formatted as "User: ...\\nAssistant: ...\\nUser: ..." etc.
+    """
+    if not chat_context:
+        return ""
+    # Split into turn blocks on lines that start with "User:"
+    lines = chat_context.splitlines()
+    blocks = []
+    current = []
+    for line in lines:
+        if line.startswith("User:"):
+            if current:
+                blocks.append("\n".join(current))
+                current = []
+        current.append(line)
+    if current:
+        blocks.append("\n".join(current))
+    recent = blocks[-max_turns:]
+    limited = "\n".join(recent).strip()
+    if len(limited) > max_chars:
+        # keep trailing chars up to max_chars, try not to cut mid-line
+        limited = limited[-max_chars:]
+        nl = limited.find("\n")
+        if 0 < nl < 120:
+            limited = limited[nl+1:]
+    return limited
 
 def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: str, openai_client) -> Tuple[str, List[str], List[str], bool]:
     # ----------------- If doc_ids provided: build document context -----------------
@@ -35,9 +67,10 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     if snippets:
         doc_context_block = "\n\n".join(snippets)
 
-    # JSON-enforcing prompt
+    # LIMIT previous conversation included in prompt
+    chat_context_limited = _limit_chat_context(chat_context)
     # pre-escape previous conversation so the f-string expression contains no backslashes
-    prev_conv = (chat_context or 'None').replace('"', '\\"')
+    prev_conv = (chat_context_limited or 'None').replace('"', '\\"')
     prompt = f"""
 You are an AI assistant constrained to ONLY the provided reference documents.
 
@@ -158,6 +191,10 @@ User question:
 def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[str]]:
     query_embedding = get_embedding(request.question, openai_client)
     vector_index = os.getenv("VECTOR_INDEX_NAME", "questions_index")
+
+    # Use limited chat context for tone but avoid blowing token budget
+    chat_context_limited = _limit_chat_context(chat_context)
+
     pipeline = [
         {"$vectorSearch": {
             "index": vector_index,
@@ -186,7 +223,7 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
 No relevant indexed documents were found for this query.
 
 Previous conversation (for tone only):
-{chat_context or 'None'}
+{chat_context_limited or 'None'}
 
 User question:
 {request.question}
