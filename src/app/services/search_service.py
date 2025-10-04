@@ -13,7 +13,6 @@ from ..services.openai_service import get_embedding,chat_completion
 
 json_path = 'config.json'
 if not os.path.exists(json_path):
-    print(os.path.abspath(json_path))
     print(f"File not found: {json_path}")
 else:
     with open(json_path, 'r', encoding='utf-8') as f:
@@ -360,6 +359,6 @@ Your goal is to synthesize the provided context into a detailed and professional
             final_tags.append({"name":name, "file_url": data1["filenames"].get(name, "")})
         else:
             final_tags.append({"name":name, "file_url":""})
-    print(final_tags)
+    # print(final_tags)
 
     return final_answer, follow_up_questions, final_tags, file_url
