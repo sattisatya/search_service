@@ -288,3 +288,30 @@ def delete_all_sessions(
             "removed_order_zset": False,
             "filtered_types": list(type_filter) if type_filter else None
         }
+
+def push_history_item(
+    chat_id: str,
+    chat_type: str,
+    question: str,
+    answer: str,
+    tags: List[dict],
+    document_ids: Optional[List[str]] = None,
+    extra: Optional[dict] = None,
+    ts: Optional[str] = None
+) -> int:
+    """
+    Append a history item to Redis. Tags are stored as-is (list of dicts).
+    """
+    entry = {
+        "question": question,
+        "answer": answer,
+        "ts": ts or iso_utc_now(),
+        "tags": tags or [],
+        "document_ids": document_ids or []
+    }
+    if extra:
+        entry.update(extra)
+    try:
+        return redis_client.rpush(redis_key(chat_id, chat_type), json.dumps(entry))
+    except Exception:
+        return 0

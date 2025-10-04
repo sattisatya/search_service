@@ -1,5 +1,5 @@
 from typing_extensions import Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
@@ -11,18 +11,17 @@ class QuestionRequest(BaseModel):
 class SearchResponse(BaseModel):
     question: str
     answer: str
-    follow_up_questions: List[str] = []
+    follow_up_questions: List[str] = Field(default_factory=list)
     chat_id: str
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None
-    tags: List[str] = []
-    file_url: Optional[str] = None  # NEW
+    tags: List[dict] = Field(default_factory=list)  # accept list of dicts
 
 class HistoryItem(BaseModel):
     question: str
     answer: str
     ts: Optional[str] = None
-    tags: List[str] = []          # NEW
+    tags: List[dict] = Field(default_factory=list)  # accept list of dicts
 
 class HistoryResponse(BaseModel):
     chat_id: str
@@ -30,7 +29,7 @@ class HistoryResponse(BaseModel):
     user_id: str
     chat_title: Optional[str]
     history: List[HistoryItem]
-    document_ids: List[str] = []   # <-- added
+    document_ids: List[str] = Field(default_factory=list)
 
 class ChatSummary(BaseModel):
     chat_id: str

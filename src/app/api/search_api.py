@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 import os, uuid, json  # added
+from typing import Any
 
 from ..services.search_service import document_search, vector_search
 from ..models.model import QuestionRequest, SearchResponse
@@ -13,7 +14,9 @@ from ..services.redis_service import (
     build_chat_context,
     update_chat_meta_on_message,
     update_chat_order,
-    add_doc_ids_to_chat_meta)
+    add_doc_ids_to_chat_meta,
+    push_history_item,  # added
+)
 from ..services.mongo_service import connect_to_mongodb
 from ..services.openai_service import get_client, generate_chat_title
 
@@ -38,6 +41,26 @@ def is_fallback_answer(answer: str) -> bool:
     low = answer.lower()
     return any(p in low for p in FALLBACK_PHRASES)
 
+# Helper to ensure tags are list[dict] before storing/returning
+def ensure_tag_objects(raw: Any, default_file_url: str = "") -> list[dict]:
+    out: list[dict] = []
+    if isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, dict):
+                name = item.get("name") or item.get("file_name") or item.get("filename") or item.get("tag")
+                furl = item.get("file_url", default_file_url)
+                if name:
+                    out.append({"name": str(name).strip(), "file_url": str(furl or "")})
+            else:
+                s = str(item).strip()
+                if s:
+                    out.append({"name": s, "file_url": default_file_url if s.lower().endswith(".pdf") else ""})
+    elif isinstance(raw, str):
+        s = raw.strip()
+        if s:
+            out.append({"name": s, "file_url": default_file_url if s.lower().endswith(".pdf") else ""})
+    return out
+
 @router.post("/search", response_model=SearchResponse)
 async def search_question(request: QuestionRequest):
     chat_id = request.chat_id or str(uuid.uuid4())
@@ -45,12 +68,19 @@ async def search_question(request: QuestionRequest):
     openai_client = get_client()
     chat_context = build_chat_context(chat_id, chat_type)
 
+    # Determine if this is the first message in this chat
+    list_key = redis_key(chat_id, chat_type)
+    try:
+        is_first = (redis_client.llen(list_key) == 0)
+    except Exception:
+        is_first = True
+
     # --- Initialize to avoid UnboundLocalError ---
     has_answer: bool = False
     used_vector: bool = False
     final_answer: str = ""
     follow_up_questions: list[str] = []
-    tags: list[str] = []
+    tags: list[dict] = []   # store exactly as produced
     doc_ids: list[str] = []
     file_url = ""
 
@@ -69,50 +99,51 @@ async def search_question(request: QuestionRequest):
         raise HTTPException(status_code=500, detail="DB connection failed")
 
     try:
-        # 1. Try document-grounded path
+        # 1) Document-grounded ONLY if doc_ids exist (no vector fallback)
         if doc_ids:
             doc_answer, doc_follow, doc_tags, doc_has = document_search(doc_ids, request, chat_context, openai_client)
             final_answer = doc_answer
             follow_up_questions = doc_follow
-            tags = doc_tags
+            tags = doc_tags  # already list[dict] from document_search
             has_answer = doc_has
+            file_url = ""  # document_search does not provide file_url
 
-            # If doc path failed, fall back to vector
+            # Do NOT run vector search when docs are attached.
             if not has_answer:
-                vec_answer, vec_follow, vec_tags , vec_file_url = vector_search(request, chat_context, openai_client, collection)
-                final_answer = vec_answer
-                follow_up_questions = vec_follow
-                tags = vec_tags
-                file_url = vec_file_url
-                used_vector = True
-                has_answer = not is_fallback_answer(final_answer)
+                # Deterministic document-only fallback
+                final_answer = "I cannot answer based on the provided documents."
+                follow_up_questions = []
+                tags = []
+                file_url = ""
         else:
-            # Direct vector
-            vec_answer, vec_follow, vec_tags , vec_file_url = vector_search(request, chat_context, openai_client, collection)
+            # 2) No docs -> use vector search
+            vec_answer, vec_follow, vec_tags, vec_file_url = vector_search(request, chat_context, openai_client, collection)
             final_answer = vec_answer
             follow_up_questions = vec_follow
-            tags = vec_tags
+            tags = vec_tags  # list[dict] from vector_search
             file_url = vec_file_url
-            used_vector = True
             has_answer = not is_fallback_answer(final_answer)
 
-        # Sanitize tags if no grounded answer
-        if not has_answer:
+        # Sanitize on fallback
+        if not has_answer or is_fallback_answer(final_answer):
             tags = []
             grounded_doc_ids = []
         else:
             grounded_doc_ids = doc_ids if doc_ids else []
 
-        # Persist turn
-        list_key = redis_key(chat_id, chat_type)
-        is_first = redis_client.llen(list_key) == 0
-        redis_client.rpush(list_key, json.dumps({
-            "question": request.question,
-            "answer": final_answer,
-            "ts": iso_utc_now(),
-            "tags": tags,
-            "document_ids": grounded_doc_ids
-        }))
+        # Normalize tags shape for Redis/API (list of dicts)
+        tags_to_store = tags
+
+        # Persist turn with tags as-is
+        push_history_item(
+            chat_id=chat_id,
+            chat_type=chat_type,
+            question=request.question,
+            answer=final_answer,
+            tags=tags,
+            document_ids=grounded_doc_ids,
+            extra=None
+        )
 
         # Title logic
         meta_key = chat_meta_key(chat_id, chat_type)
@@ -154,7 +185,7 @@ async def search_question(request: QuestionRequest):
             chat_id=chat_id,
             chat_type=chat_type,
             title=title,
-            tags=tags,
+            tags=tags_to_store,
             file_url=file_url
         )
     finally:

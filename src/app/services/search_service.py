@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import ast
 from typing import List, Tuple
 
 from click import prompt
@@ -44,7 +45,7 @@ def _limit_chat_context(chat_context: str, max_turns: int = CHAT_CONTEXT_MAX_TUR
             limited = limited[nl+1:]
     return limited
 
-def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: str, openai_client) -> Tuple[str, List[str], List[str], bool]:
+def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: str, openai_client) -> Tuple[str, List[str], List[dict], bool]:
     # ----------------- If doc_ids provided: build document context -----------------
     doc_context_block = "No referenced documents."
     snippets = []
@@ -131,9 +132,9 @@ If HAS_ANSWER is True (Type B metadata):
     "3. <Optional: The latest document (by list order) is: NAME. (ONLY if user asked)>"
   ],
   "FOLLOW_UP_QUESTIONS": [
-    "Ask a question about one document's contents",
-    "Request a summary of a specific document",
-    "Compare two documents"
+    "Question 1",
+    "Question 2",
+    "Question 3"
   ],
   "PREVIOUS_CONVERSATION": "{prev_conv}"
 }}
@@ -210,10 +211,11 @@ USER QUESTION:
     if not has_answer:
         follow_up_questions = []
 
-    tags = doc_tags
+    # Store tags as list of objects: [{name, file_url}]
+    tags = [{"name": str(n).strip(), "file_url": ""} for n in doc_tags if str(n).strip()]
     return answer_text, follow_up_questions, tags, has_answer
 
-def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[str]]:
+def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[str], str]:
     query_embedding = get_embedding(request.question, openai_client)
     vector_index = os.getenv("VECTOR_INDEX_NAME", "questions_index")
 
@@ -251,17 +253,40 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
     results = list(collection.aggregate(pipeline))
 
     if not results:
-        # No hits: deterministic fallback (NO extra LLM call optional; if you keep, still use limited context)
+        # Always return a 4‑tuple
         fallback = "I cannot answer based on stored knowledge: no relevant indexed documents were found. You may upload a document related to your question."
-        return fallback, [], []
+        return fallback, [], [], ""
 
     best = results[0]
 
-    raw_tags = best.get("tags", "")
-    if isinstance(raw_tags, str) and raw_tags.startswith("[") and raw_tags.endswith("]"):
-        tags = [t.strip(" '\"") for t in raw_tags[1:-1].split(",") if t.strip(" '\"")]
-    else:
-        tags = [t.strip() for t in str(raw_tags).split(",") if t.strip()]
+    raw_tags = best.get("tags", [])
+    names: List[str] = []
+
+    # Normalize tags to a list of names
+    if isinstance(raw_tags, list):
+        for t in raw_tags:
+            if isinstance(t, dict):
+                v = t.get("name") or t.get("filename") or t.get("file_name") or t.get("tag")
+                if isinstance(v, list):
+                    names.extend(str(x).strip() for x in v if str(x).strip())
+                elif v:
+                    names.append(str(v).strip())
+            else:
+                s = str(t).strip()
+                if s:
+                    names.append(s)
+    elif isinstance(raw_tags, str):
+        s = raw_tags.strip()
+        if s.startswith("[") and s.endswith("]"):
+            try:
+                parsed = ast.literal_eval(s)
+                if isinstance(parsed, (list, tuple)):
+                    for x in parsed:
+                        names.append(str(x).strip())
+            except Exception:
+                pass
+        else:
+            names.extend([p.strip() for p in s.split(",") if p.strip()])
 
     follow_up_questions: List[str] = []
     for i in range(1, 4):
@@ -314,4 +339,16 @@ Your goal is to synthesize the provided context into a detailed and professional
         max_tokens=600
     )
     final_answer = llm_resp.choices[0].message.content.strip()
-    return final_answer, follow_up_questions, tags , best.get("file_url", "")
+
+    # Build tags as list of objects and return file_url separately
+    file_url = best.get("file_url", "") or ""
+    tags = best.get("tags", [])
+    final_tags: List[dict] = []
+    names = tags[0].get("names",[])
+    for name in names:
+        if name.endswith(".pdf"):
+            final_tags.append({"name":name, "file_url":tags[1].get("file_url", "")})
+        final_tags.append({"name":name, "file_url":""})
+    print(final_tags)
+
+    return final_answer, follow_up_questions, final_tags, file_url
