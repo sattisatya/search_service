@@ -301,6 +301,7 @@ def push_history_item(
 ) -> int:
     """
     Append a history item to Redis. Tags are stored as-is (list of dicts).
+    Optionally include follow_up_questions via 'extra'.
     """
     entry = {
         "question": question,

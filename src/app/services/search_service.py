@@ -7,10 +7,18 @@ from typing import List, Tuple
 from click import prompt
 from ..services.mongo_service import connect_to_mongodb
 from ..models.model import QuestionRequest
-from ..services.openai_service import get_embedding,chat_completion,generate_chat_title
-from ..services.redis_service import redis_client, redis_key, chat_meta_key, iso_utc_now, update_chat_meta_on_message, update_chat_order
-from dotenv import load_dotenv
-from fastapi import HTTPException
+from ..services.openai_service import get_embedding,chat_completion
+
+
+
+json_path = 'config.json'
+if not os.path.exists(json_path):
+    print(os.path.abspath(json_path))
+    print(f"File not found: {json_path}")
+else:
+    with open(json_path, 'r', encoding='utf-8') as f:
+        data1 = json.load(f)
+
 
 # Add: limit previous conversation included in LLM prompts
 CHAT_CONTEXT_MAX_TURNS = int(os.getenv("CHAT_CONTEXT_MAX_TURNS", "3"))
@@ -85,6 +93,7 @@ Type A: Content Question
  - User asks for facts explicitly present inside the document texts.
  - Respond only if the facts are explicitly stated (no outside inference).
  - If any required fact is missing -> HAS_ANSWER = false.
+ - follow up questions should be based on the document contents, not metadata.
 
 Type B: Document Metadata / Introspection Question
  - User asks ABOUT the uploaded documents themselves (e.g. "what did I upload", "list the documents", "how many documents", "what is the new document I uploaded", "what files do you have").
@@ -92,6 +101,7 @@ Type B: Document Metadata / Introspection Question
  - Derive answers ONLY from the [DOC id | filename] headers you see.
  - Provide counts and file names. DO NOT invent upload times, ordering, or 'newest' unless the question explicitly implies latest and you will then ONLY state the last file name in the sequence shown.
  - If there are no documents (empty block), HAS_ANSWER = false.
+ - follow up questions should be based on the document contents, not metadata.
 
 HAS_ANSWER must be True ONLY when:
   (Type A) All needed facts are explicitly present in document text, OR
@@ -347,8 +357,9 @@ Your goal is to synthesize the provided context into a detailed and professional
     names = tags[0].get("names",[])
     for name in names:
         if name.endswith(".pdf"):
-            final_tags.append({"name":name, "file_url":tags[1].get("file_url", "")})
-        final_tags.append({"name":name, "file_url":""})
+            final_tags.append({"name":name, "file_url": data1["filenames"].get(name, "")})
+        else:
+            final_tags.append({"name":name, "file_url":""})
     print(final_tags)
 
     return final_answer, follow_up_questions, final_tags, file_url

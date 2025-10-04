@@ -22,6 +22,7 @@ class HistoryItem(BaseModel):
     answer: str
     ts: Optional[str] = None
     tags: List[dict] = Field(default_factory=list)  # accept list of dicts
+    follow_up_questions: List[str] = Field(default_factory=list)
 
 class HistoryResponse(BaseModel):
     chat_id: str

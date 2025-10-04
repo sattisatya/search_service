@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from dotenv import load_dotenv
 from datetime import datetime, timezone
-import os, uuid, json  # added
+import os, uuid, json
 from typing import Any
 
 from ..services.search_service import document_search, vector_search
@@ -42,8 +42,9 @@ def is_fallback_answer(answer: str) -> bool:
     return any(p in low for p in FALLBACK_PHRASES)
 
 # Helper to ensure tags are list[dict] before storing/returning
-def ensure_tag_objects(raw: Any, default_file_url: str = "") -> list[dict]:
+def ensure_tag_objects(raw: Any) -> list[dict]:
     out: list[dict] = []
+    default_file_url = ""
     if isinstance(raw, list):
         for item in raw:
             if isinstance(item, dict):
@@ -128,13 +129,26 @@ async def search_question(request: QuestionRequest):
         if not has_answer or is_fallback_answer(final_answer):
             tags = []
             grounded_doc_ids = []
+            follow_up_questions = []  # no follow-ups on fallback
         else:
             grounded_doc_ids = doc_ids if doc_ids else []
 
-        # Normalize tags shape for Redis/API (list of dicts)
-        tags_to_store = tags
+        # Ensure only the last message has follow-ups: clear previous last item's follow_ups
+        try:
+            if redis_client.llen(list_key) > 0:
+                prev_raw = redis_client.lindex(list_key, -1)
+                if prev_raw:
+                    try:
+                        prev_obj = json.loads(prev_raw)
+                        if prev_obj.get("follow_up_questions"):
+                            prev_obj["follow_up_questions"] = []
+                            redis_client.lset(list_key, -1, json.dumps(prev_obj))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
-        # Persist turn with tags as-is
+        # Persist turn with follow-ups on this last item
         push_history_item(
             chat_id=chat_id,
             chat_type=chat_type,
@@ -142,7 +156,7 @@ async def search_question(request: QuestionRequest):
             answer=final_answer,
             tags=tags,
             document_ids=grounded_doc_ids,
-            extra=None
+            extra={"follow_up_questions": follow_up_questions} if follow_up_questions else {"follow_up_questions": []}
         )
 
         # Title logic
@@ -185,7 +199,7 @@ async def search_question(request: QuestionRequest):
             chat_id=chat_id,
             chat_type=chat_type,
             title=title,
-            tags=tags_to_store,
+            tags=tags,
             file_url=file_url
         )
     finally:
