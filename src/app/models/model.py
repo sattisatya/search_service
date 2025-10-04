@@ -16,6 +16,7 @@ class SearchResponse(BaseModel):
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None
     tags: List[str] = []
+    file_url: Optional[str] = None  # NEW
 
 class HistoryItem(BaseModel):
     question: str

@@ -2,6 +2,8 @@ import os
 import json
 import re
 from typing import List, Tuple
+
+from click import prompt
 from ..services.mongo_service import connect_to_mongodb
 from ..models.model import QuestionRequest
 from ..services.openai_service import get_embedding,chat_completion,generate_chat_title
@@ -10,7 +12,7 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 
 # Add: limit previous conversation included in LLM prompts
-CHAT_CONTEXT_MAX_TURNS = int(os.getenv("CHAT_CONTEXT_MAX_TURNS", "4"))
+CHAT_CONTEXT_MAX_TURNS = int(os.getenv("CHAT_CONTEXT_MAX_TURNS", "3"))
 CHAT_CONTEXT_MAX_CHARS = int(os.getenv("CHAT_CONTEXT_MAX_CHARS", "3000"))
 
 def _limit_chat_context(chat_context: str, max_turns: int = CHAT_CONTEXT_MAX_TURNS, max_chars: int = CHAT_CONTEXT_MAX_CHARS) -> str:
@@ -69,25 +71,32 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
 
     # LIMIT previous conversation included in prompt
     chat_context_limited = _limit_chat_context(chat_context)
-    # pre-escape previous conversation so the f-string expression contains no backslashes
     prev_conv = (chat_context_limited or 'None').replace('"', '\\"')
+
     prompt = f"""
-You are an AI assistant constrained to ONLY the provided reference documents.
+You are an AI assistant that MUST rely ONLY on the provided reference documents below.
+They are presented as blocks beginning with lines like:
+[DOC <id> | <filename>]
 
-Your first task: Determine if the documents contain sufficient explicit information to answer the user's question accurately 
-(not partially, not by guess, not by outside knowledge).
+QUESTION TYPES YOU MUST HANDLE:
 
-HAS_ANSWER criteria (must be True ONLY if ALL are satisfied):
-1. The documents explicitly contain the key facts needed.
-2. No required fact must be inferred from outside knowledge.
-3. No critical ambiguity remains that would materially change the answer.
+Type A: Content Question
+ - User asks for facts explicitly present inside the document texts.
+ - Respond only if the facts are explicitly stated (no outside inference).
+ - If any required fact is missing -> HAS_ANSWER = false.
 
-If any of the above are not met, set HAS_ANSWER: False.
+Type B: Document Metadata / Introspection Question
+ - User asks ABOUT the uploaded documents themselves (e.g. "what did I upload", "list the documents", "how many documents", "what is the new document I uploaded", "what files do you have").
+ - Treat these as answerable IF there is at least one document.
+ - Derive answers ONLY from the [DOC id | filename] headers you see.
+ - Provide counts and file names. DO NOT invent upload times, ordering, or 'newest' unless the question explicitly implies latest and you will then ONLY state the last file name in the sequence shown.
+ - If there are no documents (empty block), HAS_ANSWER = false.
 
-Output Rules:
-The response MUST be valid JSON.
-Do not include explanations outside of JSON.
-Always use the exact structure below.
+HAS_ANSWER must be True ONLY when:
+  (Type A) All needed facts are explicitly present in document text, OR
+  (Type B) At least one document exists and the question is metadata-oriented.
+
+Output MUST be STRICT JSON. NO extra text.
 
 If HAS_ANSWER is False:
 {{
@@ -97,7 +106,7 @@ If HAS_ANSWER is False:
   "PREVIOUS_CONVERSATION": "{prev_conv}"
 }}
 
-If HAS_ANSWER is True:
+If HAS_ANSWER is True (Type A content):
 {{
   "HAS_ANSWER": true,
   "ANSWER": [
@@ -113,13 +122,29 @@ If HAS_ANSWER is True:
   "PREVIOUS_CONVERSATION": "{prev_conv}"
 }}
 
-Reference documents (authoritative scope; may be truncated):
+If HAS_ANSWER is True (Type B metadata):
+{{
+  "HAS_ANSWER": true,
+  "ANSWER": [
+    "1. You have X uploaded document(s).",
+    "2. Document names: <comma-separated file names>",
+    "3. <Optional: The latest document (by list order) is: NAME. (ONLY if user asked)>"
+  ],
+  "FOLLOW_UP_QUESTIONS": [
+    "Ask a question about one document's contents",
+    "Request a summary of a specific document",
+    "Compare two documents"
+  ],
+  "PREVIOUS_CONVERSATION": "{prev_conv}"
+}}
+
+REFERENCE DOCUMENTS (may be truncated):
 {doc_context_block}
 
-User question:
+USER QUESTION:
 {request.question}
 """
-
+    # print(prompt)
     llm_resp = chat_completion(
         openai_client,
         model="gpt-4o",
@@ -127,7 +152,7 @@ User question:
             {"role": "system", "content": "Return ONLY valid JSON matching the required schema."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.2,
+        temperature=0.4,
         max_tokens=900
     )
     raw_content = llm_resp.choices[0].message.content.strip()
@@ -192,8 +217,15 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
     query_embedding = get_embedding(request.question, openai_client)
     vector_index = os.getenv("VECTOR_INDEX_NAME", "questions_index")
 
-    # Use limited chat context for tone but avoid blowing token budget
+    # Use limited chat context for tone only
     chat_context_limited = _limit_chat_context(chat_context)
+    if not chat_context_limited:
+        prev_conv_block = "None"
+    else:
+        prev_conv_block = chat_context_limited
+        # Add explicit truncation notice if we actually trimmed
+        if chat_context and chat_context_limited != chat_context:
+            prev_conv_block += "\n[... truncated ...]"
 
     pipeline = [
         {"$vectorSearch": {
@@ -212,41 +244,16 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
             "follow_up_question_2": 1,
             "follow_up_question_3": 1,
             "tags": 1,
+            "file_url": 1,
             "similarity_score": 1
         }}
     ]
     results = list(collection.aggregate(pipeline))
 
     if not results:
-        # Send explicit "no relevant documents found" context to LLM (no follow-ups)
-        no_docs_prompt = f"""
-No relevant indexed documents were found for this query.
-
-Previous conversation (for tone only):
-{chat_context_limited or 'None'}
-
-User question:
-{request.question}
-
-Instructions:
-Respond with exactly this sentence (no extra text, no bullets):
-I cannot answer based on stored knowledge: no relevant indexed documents were found. You may upload a document related to your question.
-"""
-        try:
-            llm_resp = chat_completion(
-                openai_client,
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "Follow instructions exactly."},
-                    {"role": "user", "content": no_docs_prompt}
-                ],
-                temperature=0.0,
-                max_tokens=60
-            )
-            final_answer = llm_resp.choices[0].message.content.strip()
-        except Exception:
-            final_answer = "I cannot answer based on stored knowledge: no relevant indexed documents were found. You may upload a document related to your question."
-        return final_answer, [], []
+        # No hits: deterministic fallback (NO extra LLM call optional; if you keep, still use limited context)
+        fallback = "I cannot answer based on stored knowledge: no relevant indexed documents were found. You may upload a document related to your question."
+        return fallback, [], []
 
     best = results[0]
 
@@ -262,6 +269,7 @@ I cannot answer based on stored knowledge: no relevant indexed documents were fo
         if best.get(k):
             follow_up_questions.append(best[k])
 
+    # IMPORTANT: use the LIMITED previous conversation (prev_conv_block) not the full chat_context
     prompt = f"""
 You are acting as a conversational agent for a high-value client demonstration. 
 Your goal is to synthesize the provided context into a detailed and professional answer.
@@ -293,15 +301,17 @@ Your goal is to synthesize the provided context into a detailed and professional
 
 **Your detailed, numbered answer:**
 """
+    # print(prompt)
+
     llm_resp = chat_completion(
         openai_client,
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "Helpful technical assistant."},
+            {"role": "system", "content": "Helpful, precise, no hallucinations."},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.6,
-        max_tokens=500
+        temperature=0.7,
+        max_tokens=600
     )
     final_answer = llm_resp.choices[0].message.content.strip()
-    return final_answer, follow_up_questions, tags
+    return final_answer, follow_up_questions, tags , best.get("file_url", "")
