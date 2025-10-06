@@ -82,71 +82,61 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     prev_conv = (chat_context_limited or 'None').replace('"', '\\"')
 
     prompt = f"""
-You are an AI assistant that MUST rely ONLY on the provided reference documents below.
-They are presented as blocks beginning with lines like:
+You are an assistant that MUST base any factual answer ONLY on the provided REFERENCE DOCUMENTS below.
+Reference documents are shown as blocks starting with:
 [DOC <id> | <filename>]
+and may be truncated.
 
-QUESTION TYPES YOU MUST HANDLE:
+Decision rules (read carefully):
+1) If the user asks about document metadata (what files I uploaded, how many, list names, which is newest by shown order, etc.), treat this as a METADATA question (Type B) and answer from the document headers only.
+2) If the user asks for facts that should be present in the document text (dates, numbers, statements, items, descriptions), treat this as a CONTENT question (Type A).
+   - You MAY synthesize across multiple documents only when every claimed fact is explicitly supported by at least one quoted or paraphrased snippet from a document.
+   - Every factual claim MUST be accompanied by a citation in the form [DOC <id>].
+3) If required facts are missing from the provided documents, respond with HAS_ANSWER = false (do not hallucinate).
+4) Follow-up questions should be short, actionable, and grounded in the provided documents (at most 3).
 
-Type A: Content Question
- - User asks for facts explicitly present inside the document texts.
- - Respond only if the facts are explicitly stated (no outside inference).
- - If any required fact is missing -> HAS_ANSWER = false.
- - follow up questions should be based on the document contents, not metadata.
+Output rules (STRICT JSON, no extra text or fences):
+Return a single JSON object with these keys:
+- HAS_ANSWER: boolean
+- ANSWER: either a list of numbered strings (preferred) or a single string. If factual, each list item should include the supporting [DOC <id>] citation.
+- FOLLOW_UP_QUESTIONS: list of up to 3 short strings (may be empty)
+- PREVIOUS_CONVERSATION: the provided previous conversation text (unchanged)
+- SOURCES: list of objects {{"id": "<doc id>", "filename": "<file name>"}} used to support the answer (empty list if none)
 
-Type B: Document Metadata / Introspection Question
- - User asks ABOUT the uploaded documents themselves (e.g. "what did I upload", "list the documents", "how many documents", "what is the new document I uploaded", "what files do you have").
- - Treat these as answerable IF there is at least one document.
- - Derive answers ONLY from the [DOC id | filename] headers you see.
- - Provide counts and file names. DO NOT invent upload times, ordering, or 'newest' unless the question explicitly implies latest and you will then ONLY state the last file name in the sequence shown.
- - If there are no documents (empty block), HAS_ANSWER = false.
- - follow up questions should be based on the document contents, not metadata.
-
-HAS_ANSWER must be True ONLY when:
-  (Type A) All needed facts are explicitly present in document text, OR
-  (Type B) At least one document exists and the question is metadata-oriented.
-
-Output MUST be STRICT JSON. NO extra text.
-
-If HAS_ANSWER is False:
-{{
+If HAS_ANSWER is false, return exactly:
+{{{{
   "HAS_ANSWER": false,
   "ANSWER": "I cannot answer based on the provided documents.",
   "FOLLOW_UP_QUESTIONS": [],
-  "PREVIOUS_CONVERSATION": "{prev_conv}"
-}}
+  "PREVIOUS_CONVERSATION": "{prev_conv}",
+  "SOURCES": []
+}}}}
 
-If HAS_ANSWER is True (Type A content):
-{{
+If HAS_ANSWER is true (Type A content) return for example:
+{{{{
   "HAS_ANSWER": true,
   "ANSWER": [
-    "1. First strictly evidence-grounded point",
-    "2. Second strictly evidence-grounded point",
-    "3. Third strictly evidence-grounded point"
+    "1. Fact one supported by evidence. [DOC 42]",
+    "2. Fact two supported by evidence from the document. [DOC 17]"
   ],
-  "FOLLOW_UP_QUESTIONS": [
-    "Question 1",
-    "Question 2",
-    "Question 3"
-  ],
-  "PREVIOUS_CONVERSATION": "{prev_conv}"
-}}
+  "FOLLOW_UP_QUESTIONS": ["Short question 1", "Short question 2"],
+  "PREVIOUS_CONVERSATION": "{prev_conv}",
+  "SOURCES": [{{"id":"42","filename":"MeetingNotes.pdf"}}, {{"id":"17","filename":"Specs.docx"}}]
+}}}}
 
-If HAS_ANSWER is True (Type B metadata):
-{{
+If HAS_ANSWER is true (Type B metadata) return for example:
+{{{{
   "HAS_ANSWER": true,
   "ANSWER": [
-    "1. You have X uploaded document(s).",
-    "2. Document names: <comma-separated file names>",
-    "3. <Optional: The latest document (by list order) is: NAME. (ONLY if user asked)>"
+    "1. You have 2 uploaded document(s).",
+    "2. Document names: MeetingNotes.pdf, Specs.docx",
+    "3. The most recent document (by the shown list) is: MeetingNotes.pdf",
+    "4. Alternate follow up question filenames one for each document: Would you like me to summarize a \"filename\": \"MeetingNotes.pdf\"?, Which document should I open first \"filename\": \"Specs.docx\"?"
   ],
-  "FOLLOW_UP_QUESTIONS": [
-    "Question 1",
-    "Question 2",
-    "Question 3"
-  ],
-  "PREVIOUS_CONVERSATION": "{prev_conv}"
-}}
+  "FOLLOW_UP_QUESTIONS": ["Would you like me to summarize a \"filename\": \"MeetingNotes.pdf\"?", "Which document should I open first \"filename\": \"Specs.docx\"?"],
+  "PREVIOUS_CONVERSATION": "{prev_conv}",
+  "SOURCES": [{{"id":"<id1>","filename":"MeetingNotes.pdf"}},{{"id":"<id2>","filename":"Specs.docx"}}]
+}}}}
 
 REFERENCE DOCUMENTS (may be truncated):
 {doc_context_block}
