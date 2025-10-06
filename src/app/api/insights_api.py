@@ -53,9 +53,9 @@ async def get_insights():
             insights.append(
             InsightResponse(
                 id=doc.get("Insight ID", ""),
-                title=doc.get("title", doc.get("insight", "")[:50] + "..."),
+                title=doc.get("title", doc.get("insight", "")),
                 updatedAt=updated_at_str,
-                insight=doc.get("insight", ""),
+                # insight=doc.get("insight", ""),
                 user_question=doc.get("user_question", ""),
                 summary=doc.get("detailed_answer", ""),
                 # type=doc.get("type", "DOCUMENT"),
