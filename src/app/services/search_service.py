@@ -82,31 +82,31 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     prev_conv = (chat_context_limited or 'None').replace('"', '\\"')
 
     prompt = f"""
-You are an assistant that answers ONLY from provided REFERENCE DOCUMENTS below.
-Documents start with: [DOC <filename>]
+    You are an assistant that answers ONLY from provided REFERENCE DOCUMENTS below.
+    Documents start with: [DOC <filename>]
 
-Rules:
-1) Metadata questions (what files uploaded, how many, list names): Answer from headers only
-2) Content questions (facts, dates, numbers): Answer only if explicitly stated, cite [DOC <filename>]
-3) Missing facts = HAS_ANSWER: false
+    Rules:
+    1) Metadata questions (what files uploaded, how many, list names): Answer from headers only
+    2) Content questions (facts, dates, numbers): Answer only if explicitly stated, cite [DOC <filename>]
+    3) Missing facts = HAS_ANSWER: false
 
-Return strict JSON:
-- HAS_ANSWER: boolean
-- ANSWER: either a string or a list of strings (do NOT add numeric ordering)
-- FOLLOW_UP_QUESTIONS: max 3 strings
-- PREVIOUS_CONVERSATION: "{prev_conv}"
-- SOURCES: list of {{"id":"<id>","filename":"<name>"}}
+    Return strict JSON:
+    - HAS_ANSWER: boolean
+    - ANSWER: either a string or a list of strings (do NOT add numeric ordering)
+    - FOLLOW_UP_QUESTIONS: max 3 short user-style QUESTIONS (e.g. "Can you summarize KAG1.pdf?")
+    - PREVIOUS_CONVERSATION: "{prev_conv}"
+    - SOURCES: list of {{"id":"<id>","filename":"<name>"}}
 
-Examples:
-No answer: {{ "HAS_ANSWER": false, "ANSWER": "I cannot answer based on the provided documents.", "FOLLOW_UP_QUESTIONS": [], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [] }}
+    Examples:
+    No answer: {{ "HAS_ANSWER": false, "ANSWER": "I cannot answer based on the provided documents.", "FOLLOW_UP_QUESTIONS": [], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [] }}
 
-Content: {{ "HAS_ANSWER": true, "ANSWER": ["Fact with evidence [DOC 42]"], "FOLLOW_UP_QUESTIONS": ["Question?"], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [{{ "id": "42", "filename": "file.pdf" }}] }}
+    Content: {{ "HAS_ANSWER": true, "ANSWER": ["Fact with evidence [DOC 42]"], "FOLLOW_UP_QUESTIONS": ["Can you summarize the supporting document?"], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [{{ "id": "42", "filename": "file.pdf" }}] }}
 
-Metadata: {{ "HAS_ANSWER": true, "ANSWER": "You have 2 documents: file1.pdf, file2.docx.", "FOLLOW_UP_QUESTIONS": ["Summarize file1?"], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [{{ "id": "1", "filename": "file1.pdf" }}] }}
+    Metadata: {{ "HAS_ANSWER": true, "ANSWER": "You have 2 documents: file1.pdf, file2.docx.", "FOLLOW_UP_QUESTIONS": ["Can you summarize file1.pdf?"], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [{{ "id": "1", "filename": "file1.pdf" }}] }}
 
-DOCUMENTS: {doc_context_block}
-QUESTION: {request.question}
-"""
+    DOCUMENTS: {doc_context_block}
+    QUESTION: {request.question}
+    """
     # print(prompt)
     llm_resp = chat_completion(
         openai_client,
