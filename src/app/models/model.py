@@ -17,6 +17,20 @@ class SearchResponse(BaseModel):
     title: Optional[str] = None
     tags: List[dict] = Field(default_factory=list)  # accept list of dicts
 
+
+class ChatSummary(BaseModel):
+    chat_id: str
+    chat_type: Literal["question", "insight"]
+    title: Optional[str] = None
+    created: Optional[int] = None
+    message_count: int
+
+class ChatListItem(BaseModel):
+    chat_id: str
+    title: str
+    last_answer: Optional[str] = None
+    timestamp: Optional[str] = None
+
 class HistoryItem(BaseModel):
     question: str
     answer: str
