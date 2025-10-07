@@ -66,7 +66,7 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
                 if file_name not in doc_tags:
                     doc_tags.append(file_name)
                 text = (d.get("text", "") or "").strip()
-                snippets.append(f"[DOC {d.get('id')} | {file_name}]\n{text}")
+                snippets.append(f"[DOC {file_name}]\n{text}")
         except Exception:
             pass
         finally:
@@ -82,67 +82,30 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     prev_conv = (chat_context_limited or 'None').replace('"', '\\"')
 
     prompt = f"""
-You are an assistant that MUST base any factual answer ONLY on the provided REFERENCE DOCUMENTS below.
-Reference documents are shown as blocks starting with:
-[DOC <id> | <filename>]
-and may be truncated.
+You are an assistant that answers ONLY from provided REFERENCE DOCUMENTS below.
+Documents start with: [DOC <filename>]
 
-Decision rules (read carefully):
-1) If the user asks about document metadata (what files I uploaded, how many, list names, which is newest by shown order, etc.), treat this as a METADATA question (Type B) and answer from the document headers only.
-2) If the user asks for facts that should be present in the document text (dates, numbers, statements, items, descriptions), treat this as a CONTENT question (Type A).
-   - You MAY synthesize across multiple documents only when every claimed fact is explicitly supported by at least one quoted or paraphrased snippet from a document.
-   - Every factual claim MUST be accompanied by a citation in the form [DOC <id>].
-3) If required facts are missing from the provided documents, respond with HAS_ANSWER = false (do not hallucinate).
-4) Follow-up questions should be short, actionable, and grounded in the provided documents (at most 3).
+Rules:
+1) Metadata questions (what files uploaded, how many, list names): Answer from headers only
+2) Content questions (facts, dates, numbers): Answer only if explicitly stated, cite [DOC <filename>]
+3) Missing facts = HAS_ANSWER: false
 
-Output rules (STRICT JSON, no extra text or fences):
-Return a single JSON object with these keys:
+Return strict JSON:
 - HAS_ANSWER: boolean
-- ANSWER: either a list of numbered strings (preferred) or a single string. If factual, each list item should include the supporting [DOC <id>] citation.
-- FOLLOW_UP_QUESTIONS: list of up to 3 short strings (may be empty)
-- PREVIOUS_CONVERSATION: the provided previous conversation text (unchanged)
-- SOURCES: list of objects {{"id": "<doc id>", "filename": "<file name>"}} used to support the answer (empty list if none)
+- ANSWER: either a string or a list of strings (do NOT add numeric ordering)
+- FOLLOW_UP_QUESTIONS: max 3 strings
+- PREVIOUS_CONVERSATION: "{prev_conv}"
+- SOURCES: list of {{"id":"<id>","filename":"<name>"}}
 
-If HAS_ANSWER is false, return exactly:
-{{{{
-  "HAS_ANSWER": false,
-  "ANSWER": "I cannot answer based on the provided documents.",
-  "FOLLOW_UP_QUESTIONS": [],
-  "PREVIOUS_CONVERSATION": "{prev_conv}",
-  "SOURCES": []
-}}}}
+Examples:
+No answer: {{ "HAS_ANSWER": false, "ANSWER": "I cannot answer based on the provided documents.", "FOLLOW_UP_QUESTIONS": [], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [] }}
 
-If HAS_ANSWER is true (Type A content) return for example:
-{{{{
-  "HAS_ANSWER": true,
-  "ANSWER": [
-    "1. Fact one supported by evidence. [DOC 42]",
-    "2. Fact two supported by evidence from the document. [DOC 17]"
-  ],
-  "FOLLOW_UP_QUESTIONS": ["Short question 1", "Short question 2"],
-  "PREVIOUS_CONVERSATION": "{prev_conv}",
-  "SOURCES": [{{"id":"42","filename":"MeetingNotes.pdf"}}, {{"id":"17","filename":"Specs.docx"}}]
-}}}}
+Content: {{ "HAS_ANSWER": true, "ANSWER": ["Fact with evidence [DOC 42]"], "FOLLOW_UP_QUESTIONS": ["Question?"], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [{{ "id": "42", "filename": "file.pdf" }}] }}
 
-If HAS_ANSWER is true (Type B metadata) return for example:
-{{{{
-  "HAS_ANSWER": true,
-  "ANSWER": [
-    "1. You have 2 uploaded document(s).",
-    "2. Document names: MeetingNotes.pdf, Specs.docx",
-    "3. The most recent document (by the shown list) is: MeetingNotes.pdf",
-    "4. Alternate follow up question filenames one for each document: Would you like me to summarize a \"filename\": \"MeetingNotes.pdf\"?, Which document should I open first \"filename\": \"Specs.docx\"?"
-  ],
-  "FOLLOW_UP_QUESTIONS": ["Would you like me to summarize a \"filename\": \"MeetingNotes.pdf\"?", "Which document should I open first \"filename\": \"Specs.docx\"?"],
-  "PREVIOUS_CONVERSATION": "{prev_conv}",
-  "SOURCES": [{{"id":"<id1>","filename":"MeetingNotes.pdf"}},{{"id":"<id2>","filename":"Specs.docx"}}]
-}}}}
+Metadata: {{ "HAS_ANSWER": true, "ANSWER": "You have 2 documents: file1.pdf, file2.docx.", "FOLLOW_UP_QUESTIONS": ["Summarize file1?"], "PREVIOUS_CONVERSATION": "{prev_conv}", "SOURCES": [{{ "id": "1", "filename": "file1.pdf" }}] }}
 
-REFERENCE DOCUMENTS (may be truncated):
-{doc_context_block}
-
-USER QUESTION:
-{request.question}
+DOCUMENTS: {doc_context_block}
+QUESTION: {request.question}
 """
     # print(prompt)
     llm_resp = chat_completion(
@@ -239,14 +202,15 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
         {"$addFields": {"similarity_score": {"$meta": "vectorSearchScore"}}},
         {"$match": {"similarity_score": {"$gt": 0.75}}},
         {"$project": {
-            "user_question": 1,
+            # "user_question": 1,
             "detailed_answer": 1,
             "follow_up_question_1": 1,
             "follow_up_question_2": 1,
             "follow_up_question_3": 1,
             "tags": 1,
             "file_url": 1,
-            "similarity_score": 1
+            "similarity_score": 1,
+            "user_question_short": 1
         }}
     ]
     results = list(collection.aggregate(pipeline))

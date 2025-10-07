@@ -47,8 +47,8 @@ def process_questions_and_create_embeddings():
         
         for doc in documents:
             # Generate embedding only for main question
-            if 'user_question' in doc:
-                main_q_embedding = get_embedding(doc['user_question'], client=openai_client)
+            if 'user_question_short' in doc:
+                main_q_embedding = get_embedding(doc['user_question_short'], client=openai_client)
                 if main_q_embedding:
                     # Update document with only the main question embedding
                     collection.update_one(

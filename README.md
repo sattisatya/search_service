@@ -62,28 +62,28 @@ Intelligent question answering with chat context.
 {
   "question": "string",
   "chat_id": "string",
-  "chat_type": "question",
-  "document_ids": [
-    "string"
-  ]
+  "chat_type": "question"
 }
 ```
 
 **Response:**
 ```json
 {
-  "question": "What are the key infrastructure components being addressed in the N1 Trunk Infrastructure Agreement?",
-  "answer": "- Construction of roads\n- Storm water drains\n- Water supply network\n- Sewerage network\n- Utility ducts for power & ICT\n- Reuse waterline\n- Pedestrian and cycle tracks\n- Avenue plantation\n- Street furniture",
+  "question": "What is the agenda of the meeting?",
+  "answer": "Review of project execution status under Agreement No. /CE/ADC/Engg./2025-26.\nIdentification of pending issues relating to land acquisition, clearances, and departmental coordination.\nFinalization of timelines for completion of immediate tasks.\nAssignment of responsibilities and action items to concerned officers.",
   "follow_up_questions": [
-    "What percentage of land has been acquired for the project, and which district has pending land acquisition?",
-    "What specific action items were assigned to the Superintendent Engineer and the Executive Engineer (APTransco) during the meeting?",
-    "When is the next review meeting scheduled, and where will it take place?"
+    "What were the resolutions made in the meeting?",
+    "Who were the members present at the meeting?",
+    "What issues were discussed in detail during the meeting?"
   ],
-  "chat_id": "bd74192e-70c2-436b-9ad6-13c5548726f8",
+  "chat_id": "da333fa3-f2e4-4768-9286-66ebf30ff01c",
   "chat_type": "question",
-  "title": "Document Overview",
+  "title": "Guntur Project Overview",
   "tags": [
-    "MoM_N1_Trunk_Infra_11Aug2025_MoM.pdf"
+    {
+      "name": "MoM_N1_Trunk_Infra_11Aug2025_MoM.pdf",
+      "file_url": ""
+    }
   ]
 }
 ```
@@ -94,37 +94,41 @@ Retrieve conversation history for a session.
 **Response:**
 ```json
 {
-  "chat_id": "insight_36",
-  "chat_type": "insight",
+  "chat_id": "f8f944c6-64cd-4cab-9a8f-2f72cb94337d",
+  "chat_type": "question",
   "user_id": "admin",
-  "chat_title": "Contractor Mobilization Speed and Timeline Trade-Off Stra...",
+  "chat_title": "Amaravathi Project Overview",
   "history": [
     {
-      "question": "How quickly did the contractor achieve initial mobilization, and what was the trade-off strategy used to maintain the 24-month project timeline despite land acquisition delays?",
-      "answer": "- 90% mobilization (plant, machinery, site office) achieved by April 18, 2025\n- Only 95% of Right-of-Way (ROW) cleared by that time, with a 100m commercial stretch pending eviction\n- Project Director directed contractor to immediately begin work in cleared segments to offset delays\n- Strategy helped maintain the March 2027 completion target\n- 20.5% physical progress achieved by September 2025\n- Approximately 25% of the total project timeline had elapsed by September 2025",
-      "ts": "2025-10-01T12:14:55Z",
+      "question": "amaravathi project details",
+      "answer": "1. The Amaravati E6 Road Project (Package VII) is currently in progress.\n2. The project has achieved approximately 20.5% physical completion.\n3. Completed tasks include earthwork and road formation.\n4. Ongoing tasks involve utility ducting, sewerage, and storm drains.\n5. The project has faced minor delays due to unmapped utilities and pending land clearance.\n6. Despite these delays, the project is on track for its planned completion in March 2027.",
+      "ts": "2025-10-07T05:23:04Z",
       "tags": [
-        "Mobilization",
-        "Timeline",
-        "Project Management",
-        "Land Clearance",
-        "Physical Progress",
-        "Amaravati Meetings Log.pdf",
-        "Amaravati E6 Project.pdf"
-      ]
-    },
-    {
-      "question": "What was the total physical progress achieved by the final review meeting on December 15, 2026?",
-      "answer": "- The key action item for APADCL was to issue land demarcation instruction for Site A to the State Department",
-      "ts": "2025-10-01T12:18:46Z",
-      "tags": [
-        "Action Item",
-        "Site Selection",
-        "Land",
-        "Amaravati Airport Meetings.pdf"
+        {
+          "name": "Project Status",
+          "file_url": ""
+        },
+        {
+          "name": "Identification",
+          "file_url": ""
+        },
+        {
+          "name": "Work Package",
+          "file_url": ""
+        },
+        {
+          "name": "Amaravati E6 Project.pdf",
+          "file_url": "https:xxxxx"
+        }
+      ],
+      "follow_up_questions": [
+        "What is the current reported physical progress percentage as of mid-October 2025, and what construction activity is nearing completion?",
+        "What are the core design specifications for the road, including the number of lanes, carriageway width, and design speed?",
+        "What are the two most significant 'live' utility conflicts identified, and what is the target date for resolving the electrical pole shifting?"
       ]
     }
-  ]
+  ],
+  "document_ids": []
 }
 ```
 
@@ -135,52 +139,88 @@ List all active session IDs.
 ```json
 [
   {
-    "chat_id": "ef2c3244-75c7-40f9-be8c-1853125abdb2",
-    "title": "E6 Road Work Package VII Tender Number",
-    "last_answer": "The full tender reference number for the E6 Road Work Package VII is not explicitly mentioned in the provided context.",
-    "timestamp": "2025-09-30T14:17:42Z"
+    "chat_id": "c278a833-38f7-4bce-820a-54f0c88519ab",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "The main topic of KAG1.pdf is the introduction of a professional domain knowledge service framework called Knowledge Augmented Generation (KAG), which aims to enhance the performance of large language models (LLMs) in professional domains by integrating knowledge graphs and retrieval-augmented generation methods.",
+    "timestamp": "2025-10-07T05:30:16Z"
   },
   {
-    "chat_id": "6a2bd6e5-5bc3-4750-953b-00ef53b85c0d",
-    "title": "Questions for Document Review",
-    "last_answer": "Some of the resolutions made during the review meeting included ensuring updated execution schedules are submitted, timely submission of the Utilization Certificate, obtaining approval for the Substation design, pursuing Environmental Clearance, and holding bi-weekly review meetings for progress monitoring.",
-    "timestamp": "2025-09-30T13:23:29Z"
+    "chat_id": "insight_35",
+    "title": "E6 Road Underground Utility Quality Measures",
+    "last_answer": "1. **Street Furniture Delivery Schedule:** The primary focus of Review Meeting 5 on November 08, 2026, was on planning and coordinating the timely delivery and installation of street furniture. This includes elements such as benches, lighting, and signage, which are essential for enhancing the functionality and aesthetic appeal of the road infrastructure.\n\n2. **Final Drainage Review:** Another critical topic discussed during the meeting was the final drainage review. This involved a comprehensive evaluation of the drainage systems to ensure they effectively manage water runoff and prevent potential flooding or waterlogging issues, thereby maintaining the road's integrity and usability.",
+    "timestamp": "2025-10-07T05:28:31Z"
   },
   {
-    "chat_id": "cfc54919-598e-4765-bbae-573fbd897cf9",
-    "title": "Status of Guntur Irrigation Project",
-    "last_answer": "The status of the Guntur Irrigation (IRR) project is that the finalized land requirement for phased development is approximately ~2,000 acres.",
-    "timestamp": "2025-09-30T12:28:49Z"
+    "chat_id": "da333fa3-f2e4-4768-9286-66ebf30ff01c",
+    "title": "Guntur Project Overview",
+    "last_answer": "Review of project execution status under Agreement No. /CE/ADC/Engg./2025-26.\nIdentification of pending issues relating to land acquisition, clearances, and departmental coordination.\nFinalization of timelines for completion of immediate tasks.\nAssignment of responsibilities and action items to concerned officers.",
+    "timestamp": "2025-10-07T05:27:43Z"
   },
   {
-    "chat_id": "810d2ae5-b139-4839-96f4-4100bb948684",
-    "title": "Number of Projects",
-    "last_answer": "Based on the information provided, it appears that there is one project with an estimated progress of around 15%.",
-    "timestamp": "2025-09-30T12:28:04Z"
+    "chat_id": "f8f944c6-64cd-4cab-9a8f-2f72cb94337d",
+    "title": "Amaravathi Project Overview",
+    "last_answer": "1. The Amaravati E6 Road Project (Package VII) is currently in progress.\n2. The project has achieved approximately 20.5% physical completion.\n3. Completed tasks include earthwork and road formation.\n4. Ongoing tasks involve utility ducting, sewerage, and storm drains.\n5. The project has faced minor delays due to unmapped utilities and pending land clearance.\n6. Despite these delays, the project is on track for its planned completion in March 2027.",
+    "timestamp": "2025-10-07T05:23:05Z"
   },
   {
-    "chat_id": "c07b48fb-eb6e-475b-b3b9-172850d28fb1",
-    "title": "Material Supply Risk Mitigation",
-    "last_answer": "The mitigation for the Material Supply risk was that the Contractor was required to submit the final As-Built Drawings and O&M Manuals (5 sets) by 15 January 2027.",
-    "timestamp": "2025-09-30T12:27:43Z"
+    "chat_id": "5cdd50c3-ba29-4736-94ef-c2d1f3fed0be",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "KAG achieved significant improvements in professionalism compared to RAG methods in two professional knowledge Q&A tasks of Ant Group, including E-Government Q&A and E-Health Q&A. [DOC KAG1.pdf]",
+    "timestamp": "2025-10-06T17:34:49Z"
   },
   {
-    "chat_id": "0173b394-391e-43c5-ae80-bcfc4eeda5af",
-    "title": "Contractor Mobilization Speed and Project Timeline Strategy",
-    "last_answer": "The mitigation for the Material Supply risk was to require the Contractor to submit the final As-Built Drawings and O&M Manuals (5 sets) by 15 January 2027.",
-    "timestamp": "2025-09-30T12:22:39Z"
+    "chat_id": "38612c02-7946-419d-ad95-06512fbe0c4e",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "1. You have 1 uploaded document(s).\n2. Document names: KAG1.pdf\n3. The most recent document (by the shown list) is: KAG1.pdf",
+    "timestamp": "2025-10-06T17:26:53Z"
   },
   {
-    "chat_id": "690929a8-10f1-4e2d-894a-4e993fdacdee",
-    "title": "Contractor Mobilization Speed and Timeline Trade-offs",
-    "last_answer": "The contractor achieved **90% mobilization (plant, machinery, site office) by April 18, 2025**. To maintain the 24-month project timeline despite land acquisition delays, they began work in cleared segments immediately, reaching **20.5% physical progress** by September 2025.",
-    "timestamp": "2025-09-30T12:16:40Z"
+    "chat_id": "test1",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "1. The document introduces Knowledge Augmented Generation (KAG), a framework designed to enhance large language models (LLMs) with professional domain knowledge using knowledge graphs (KG) and retrieval-augmented generation (RAG) techniques. [DOC c15a3835b710673e57466ed17e6ad5ae]\n2. KAG addresses limitations of RAG, such as insensitivity to numerical values and temporal relations, by integrating semantic reasoning and logical forms into the retrieval and generation processes. [DOC c15a3835b710673e57466ed17e6ad5ae]\n3. The framework consists of three main components: KAG-Builder for building offline indexes, KAG-Solver for hybrid reasoning, and KAG-Model for optimizing language model capabilities. [DOC c15a3835b710673e57466ed17e6ad5ae]\n4. KAG has been applied in professional Q&A tasks at Ant Group, showing significant improvements in accuracy and professionalism over traditional RAG methods. [DOC c15a3835b710673e57466ed17e6ad5ae]",
+    "timestamp": "2025-10-06T17:20:25Z"
   },
   {
-    "chat_id": "d54e7d59-784b-4632-a3ce-219d1c2244eb",
-    "title": "E6 Road Work Package VII Tender Number",
-    "last_answer": "The full tender reference number for the E6 Road Work Package VII is not explicitly mentioned in the prior context provided. You may need to refer to the official tender documents or contact the relevant procurement or contracting department for this specific information.",
-    "timestamp": "2025-09-30T11:52:12Z"
+    "chat_id": "test",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "1. You have 1 uploaded document(s).\n2. Document names: sample.txt",
+    "timestamp": "2025-10-06T17:04:55Z"
+  },
+  {
+    "chat_id": "725d3ac7-4479-4301-902a-aa25129a4c84",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "1. You uploaded the **Registration Certificate**, which is a mandatory document.",
+    "timestamp": "2025-10-06T17:02:19Z"
+  },
+  {
+    "chat_id": "2f8b755d-6030-4f27-a07c-42d84c91d9b8",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "1. You uploaded the **Registration Certificate**, which is a mandatory document.",
+    "timestamp": "2025-10-06T17:01:27Z"
+  },
+  {
+    "chat_id": "b847fb71-d1e7-45f0-902e-82e3f9b7a821",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "1. You have 1 uploaded document(s).\n2. Document names: sample.txt",
+    "timestamp": "2025-10-06T17:00:21Z"
+  },
+  {
+    "chat_id": "insight_34",
+    "title": "E6 Road Infrastructure Progress Review September 2025",
+    "last_answer": "1. **Road Formation:** The initial earthwork and road formation for the entire E6 Road corridor are fully completed, standing at 100% completion.\n\n2. **Utility Ducting (Power & ICT):** Progress on utility ducting, involving trench excavation and duct laying for power and ICT utilities, is at 55% completion.\n\n3. **Sewerage Network:** The installation of the trunk sewer line in the northern sector of the project is 40% complete.\n\n4. **Storm Water Drains:** The construction of storm water infrastructure, including collection chambers and drain lines, has reached 25% completion.\n\n5. **Water Networks:** The installation of water supply and reuse lines is currently paused in sections where subgrade construction work is actively ongoing.",
+    "timestamp": "2025-10-04T18:43:50Z"
+  },
+  {
+    "chat_id": "insight_31",
+    "title": "Amaravati E6 Road Project Timeline Inquiry",
+    "last_answer": "1. The Amaravati E6 Road Smart Trunk Infrastructure project is planned to have a total duration of 24 months.\n2. The anticipated completion date for the project is March 2027.\n3. As of September 27, 2025, the project had achieved a physical progress of 20.5%.\n4. By September 27, 2025, approximately 25% of the total project time had elapsed.\n5. A final review meeting was conducted on December 15, 2026.\n6. During this final review, Substantial Completion was confirmed at 98%.\n7. The final review validated the team's adherence to the project timeline.",
+    "timestamp": "2025-10-04T18:41:36Z"
+  },
+  {
+    "chat_id": "1f5016ba-7f67-43ae-b539-05666a842237",
+    "title": "Uploaded Documents Inquiry",
+    "last_answer": "I cannot answer based on the provided documents.",
+    "timestamp": "2025-10-04T16:36:31Z"
   }
 ]
 ```
@@ -221,157 +261,85 @@ List all insights (newest first).
 ```json
 [
   {
-    "id": "insight_11",
-    "title": "Monsoon Risk and Scheduling Urgency...",
+    "id": "insight_36",
+    "title": "Timeline Adherence and Mobilization Status",
     "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Monsoon Risk and Scheduling Urgency",
-    "user_question": "How did the aggressive 12-month schedule impact the foundation work and monsoon preparedness actions?",
-    "detailed_answer": "The Superintending Engineer (SE) emphasized sticking to the **aggressive 12-month schedule** for foundation work during the pre-monsoon dry period. To mitigate monsoon impact, the SE stressed the urgency of completing all **canal bed work (CC lining)**. Action items mandated the contractor to install storm water drains and bunds around active pits **before the end of July**.",
+    "insight": "Timeline Adherence and Mobilization Status",
+    "user_question": "How fast was contractor mobilization, and what trade-offs were made?",
+    "summary": "The project achieved 90% mobilization by April 18, 2025, but 5% of the Right-of-Way remains uncleared. To maintain the March 2027 completion date, work commenced in cleared areas, resulting in 20.5% physical progress by September 2025 with ~25% of the time elapsed.",
+    "tags": [
+      "Mobilization",
+      "Timeline",
+      "Project Management",
+      "Land Clearance",
+      "Physical Progress",
+      "Amaravati Meetings Log.pdf",
+      "Amaravati E6 Project.pdf"
+    ]
+  },
+  {
+    "id": "insight_35",
+    "title": "Quality Control and Technical Validation Strategy",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Quality Control and Technical Validation Strategy",
+    "user_question": "What quality control measures were used for E6 Road utilities?",
+    "summary": "The project emphasizes stringent quality control with mandatory third-party inspections and hydraulic pressure testing before backfilling. A pre-commissioning survey in December 2026 will assess road profiles and drainage slopes for design compliance.",
+    "tags": [
+      "Quality Control",
+      "Testing",
+      "Compliance",
+      "Sewerage",
+      "Inspection",
+      "Amaravati E6 Project.pdf",
+      "Amaravati Meetings Log.pdf"
+    ]
+  },
+  {
+    "id": "insight_34",
+    "title": "Physical Progress Breakdown of Core Utility Networks (Sept 2025)",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Physical Progress Breakdown of Core Utility Networks (Sept 2025)",
+    "user_question": "What's the September 2025 progress on E6 Road infrastructure?",
+    "summary": "As of September 27, 2025, the project is focused on below-ground utility work: road formation is 100% complete, utility ducting is 55% done, sewerage network is 40% complete, storm water drains are at 25%, and water network installation is paused in active subgrade areas.",
+    "tags": [
+      "Physical Progress",
+      "Utility Networks",
+      "Sewerage",
+      "Road Formation",
+      "ICT Ducting",
+      "Amaravati E6 Project.pdf"
+    ]
+  },
+  {
+    "id": "insight_33",
+    "title": "Financial Overview and International Funding",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Financial Overview and International Funding",
+    "user_question": "What is the E6 Road project's contract value and financiers?",
+    "summary": "The Engineering Contract Value for the Balance Smart Trunk Infrastructure on E6 Road (Package VII) is **323.57 Crores**, funded by the **World Bank** and **Asian Development Bank** as part of the Amaravati infrastructure development programs.",
+    "tags": [
+      "Financials",
+      "Contract Value (ECV)",
+      "Funding Source",
+      "World Bank",
+      "ADB",
+      "Amaravati E6 Project.pdf"
+    ]
+  },
+  {
+    "id": "insight_32",
+    "title": "Mitigation Strategy for Critical E6 Road Project Risks",
+    "updatedAt": "2025-09-30T07:20:25.021100",
+    "insight": "Mitigation Strategy for Critical E6 Road Project Risks",
+    "user_question": "What are the top three risks and their mitigations for E6?",
+    "summary": "The project faces three key risks: a **3-week delay** from unmapped utilities, pending land clearance expected by **November 2025**, and material supply issues mitigated by maintaining buffer stock and engaging multiple vendors.",
     "tags": [
       "Risk Management",
-      "Monsoon",
-      "Foundation",
-      "Schedule"
-    ]
-  },
-  {
-    "id": "insight_10",
-    "title": "Project Timeline and Critical Progress Milestones...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Project Timeline and Critical Progress Milestones",
-    "user_question": "What is the total completion period for the project, and what is the latest reported physical progress and key milestones achieved?",
-    "detailed_answer": "The project has a completion period of **12 months from the date of agreement**. As of the July 25, 2024 review meeting, the contractor reported **45% physical progress**. Critical milestones achieved include: **Full piling complete**, and **Pier P1 and P2 pile caps cast**. The **LMC CC lining** (canal bed work) was **confirmed met by the September 30 deadline**.",
-    "tags": [
-      "Progress",
-      "Timeline",
-      "Milestones",
-      "Piling"
-    ]
-  },
-  {
-    "id": "insight_9",
-    "title": "Contract Valuation and Bid Security Requirements...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Contract Valuation and Bid Security Requirements",
-    "user_question": "What are the key financial and commercial parameters for this tender, including the Estimated Contract Value and the Bid Security amount?",
-    "detailed_answer": "The **Estimated Contract Value (ECV)** is **₹19,36,33,680 (INR 19.36 Crores)**. The required **Bid Security (EMD)** is **₹1,936,500.00**. The contract uses a **price-based (L1) selection** criterion, the evaluation type is **percentage based** (above/below ECV), and **Reverse Tendering** is applicable. **Joint Venture (JV) participation is permitted**.",
-    "tags": [
-      "Finance",
-      "Tender",
-      "ECV",
-      "EMD"
-    ]
-  },
-  {
-    "id": "insight_8",
-    "title": "Bridge Structure and Highway Connectivity...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Bridge Structure and Highway Connectivity",
-    "user_question": "What is the detailed scope of the civil work and its specific location within the Polavaram Project?",
-    "detailed_answer": "The work is the Construction of an **NH Crossing Bridge** on the **Left Main Canal (LMC)** near **Kathipudi village** in Kakinada District. The structure consists of a **4-lane main bridge** with an **additional 2-lane service bridge on either side**. It intersects **National Highway NH-216** at **Km 1.850**. The scope also includes approach roads, canal excavation, and **Cement Concrete (CC) lining** of the canal.",
-    "tags": [
-      "Scope",
-      "Location",
-      "LMC",
-      "NH-216"
-    ]
-  },
-  {
-    "id": "insight_7",
-    "title": "High-Stakes Procurement Integrity and Governance...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "High-Stakes Procurement Integrity and Governance",
-    "user_question": "What stringent integrity and governance mechanisms are in place for the procurement of the Polavaram and Guntur projects?",
-    "detailed_answer": "The State's procurement process is protected by high-stakes governance clauses:\n\n1. **Polavaram Tender Integrity (G.O.Ms.No.174):** The L1 bidder is required to submit original hard copies of all uploaded documents. **Severe Penalties** are explicitly detailed for non-submission or variation of documents, including **suspension from tenders for 3 years** and potential criminal prosecution.\n\n2. **Guntur IRR Reverse Tendering (L1):** The project is subject to the strict adherence of QA standards due to the **reverse tendering process**. This governance model inherently carries a **risk of quality compromise due to tight margins**, which is mitigated by mandated **Independent Third-Party QA/QC audits** and strict material testing.",
-    "tags": [
-      "Governance",
-      "Integrity Clause",
-      "Reverse Tendering",
-      "Penalties"
-    ]
-  },
-  {
-    "id": "insight_6",
-    "title": "Schedule Performance and Delay Mitigation...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Schedule Performance and Delay Mitigation",
-    "user_question": "How do the active construction projects compare in terms of schedule performance, and what is the long-term accountability timeline?",
-    "detailed_answer": "The two foundational construction projects have varying schedule statuses:\n\n1.  **Amaravati E6 Road:** The project is managing a slight gap between time elapsed and progress: **~25% Time Elapsed** versus **20.5% Physical Progress** (as of Sept 2025). The 3-week delay from utility conflicts puts pressure on the March 2027 completion goal.\n\n2.  **Guntur IRR Loop Phase III:** This project has just commenced (NTP Sept 2025) and is only at **5% physical progress**. The primary schedule risk is the delay in quality clearance (cross-slope rectification) and land handover, preventing the start of higher-productivity pavement work.\n\n**Long-Term Accountability:** The **Amaravati E6 Road** project sets a long-term compliance milestone with its **24-month Defect Liability Period (DLP)**, scheduled to commence with the issuance of the Provisional Completion Certificate on **January 1, 2027**.",
-    "tags": [
-      "Schedule Performance",
-      "DLP",
-      "Time Elapsed",
-      "Physical Progress"
-    ]
-  },
-  {
-    "id": "insight_5",
-    "title": "Financial Flow and Investment Scale...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Financial Flow and Investment Scale",
-    "user_question": "What is the financial scale of the two major road/utility projects, and what is the current status of financial disbursement (Running Account Bills)?",
-    "detailed_answer": "The Amaravati E6 Road project is the largest civil works contract documented at **323.57 Crores**, significantly larger than the Guntur IRR Loop Phase III at **~46.56 Crores**.\n\n**Financial Flow Status:** Disbursement is active, with the **Second Running Bill** for the Amaravati E6 Road (representing 25% progress) confirmed processed and paid. The **First Running Account (R/A) Bill** for the newly started Guntur IRR Loop (estimated at ~15% progress) is currently being finalized for payment processing.",
-    "tags": [
-      "Financial Status",
-      "Contract Value",
-      "Funding",
-      "Running Bill"
-    ]
-  },
-  {
-    "id": "insight_4",
-    "title": "Foundation Milestones and Land Clearance Status...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Foundation Milestones and Land Clearance Status",
-    "user_question": "What foundational milestones have been achieved, and what is the current status of the residual land clearance risk across the construction projects?",
-    "detailed_answer": "Key foundational milestones have been hit, but land remains a risk:\n\n1. **Polavaram LMC Bridge:** The critical **CC lining of the LMC was completed** by the Sept 30, 2024 deadline, allowing canal operations to resume without affecting superstructure work.\n\n2. **Guntur IRR Loop Phase III:** Confirmed **90% ROW clearance** but is challenged by a **pending 10% section near Palakaluru**.\n\n3. **Amaravati E6 Road:** **Road Formation (initial earthwork) is 100% complete** for the entire corridor, enabling the next phase, but minor land pockets remain at intersections.",
-    "tags": [
-      "Milestone Achievement",
-      "Land Clearance",
-      "ROW Clearance",
-      "CC Lining"
-    ]
-  },
-  {
-    "id": "insight_3",
-    "title": "Operational and Strategic Risk Mitigation in Amara...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Operational and Strategic Risk Mitigation in Amaravati Projects",
-    "user_question": "How are the Amaravati E6 Road and Airport projects addressing their distinct challenges related to utility conflicts and future concession structuring?",
-    "detailed_answer": "The two Amaravati projects are mitigating risks specific to their phases:\n\n1.  **Amaravati E6 Road (Operational Risk):** This project experienced a **3-week delay** due to **unmapped utilities**, impacting the critical **Utility Ducting (55% complete)**. The mitigation includes GPR surveys and a mandate for immediate completion of ducting.\n\n2.  **Amaravati Greenfield Airport (Strategic Risk):** The 55%-complete consultancy phase requires finalizing documents for its future **PPP/Concession** model. The consultant must prepare the **Risk Allocation Matrix** and conduct a **sensitivity analysis** on terminal costs to solidify the financial model.",
-    "tags": [
-      "Operational Risk",
-      "Strategic Planning",
       "Utility Conflicts",
-      "PPP/Concession"
-    ]
-  },
-  {
-    "id": "insight_2",
-    "title": "Critical Path Dependency on Regulatory & Quality C...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Critical Path Dependency on Regulatory & Quality Compliance",
-    "user_question": "Which two construction projects are facing imminent threats to their schedule based on external approvals or internal quality mandates, and what are the mandatory corrective actions?",
-    "detailed_answer": "The Polavaram and Guntur projects are both facing critical compliance hurdles:\n\n1.  **Polavaram LMC Bridge:** The project is physically ready (girders certified) but is blocked by the need for regulatory approval for the **night block traffic diversion plan** to launch girders over the active NH-216.\n\n2.  **Guntur IRR Loop Phase III:** Progress is stalled by a **mandatory quality failure**. The IE issued only provisional acceptance of the initial subgrade (5% progress) and demanded **cross-slope rectification**, preventing the commencement of the next layer.",
-    "tags": [
-      "Critical Path",
-      "Regulatory Compliance",
-      "Quality Control",
-      "Polavaram LMC Bridge"
-    ]
-  },
-  {
-    "id": "insight_1",
-    "title": "Consolidated Infrastructure Portfolio Status and S...",
-    "updatedAt": "2025-09-30T07:20:25.021100",
-    "insight": "Consolidated Infrastructure Portfolio Status and Strategic Focus Areas",
-    "user_question": "What is the overall status of the four major infrastructure projects, and which require immediate management attention based on current risks?",
-    "detailed_answer": "The portfolio is actively managed across **four major projects** spanning three phases: **Advanced Construction** (Polavaram LMC Bridge, 45% complete on foundation), **Foundational Construction** (Guntur IRR Phase III and Amaravati E6 Road, 5%-20.5% complete), and **Strategic Planning** (Amaravati Airport, ~55% complete). The portfolio's immediate attention is split between resolving **critical regulatory bottlenecks** (Polavaram) and ensuring **foundational quality and land clearance** compliance (Guntur IRR). The Amaravati projects focus on mitigating utility delays (E6 Road) and finalizing strategic financial models (Airport).",
-    "tags": [
-      "Portfolio Summary",
-      "Status Overview",
-      "Critical Attention",
-      "Polavaram"
+      "Land Acquisition",
+      "Material Supply",
+      "GPR",
+      "Amaravati E6 Project.pdf"
     ]
   }
 ]
@@ -425,7 +393,10 @@ multipart/form-data
 **Response**
 ```json
 {
-  "document_id": "7e8e1ef877f9535dc6faa9b0015d9d42"
+  "document_id": "7e8e1ef877f9535dc6faa9b0015d9d42",
+  "chat_id":"da333fa3-f2e4-4768-9286-66ebf30ff01c",
+  "message":"Document added. 1/2 used."
+
 }
 ```
 
@@ -441,7 +412,6 @@ class QuestionRequest(BaseModel):
     question: str
     chat_id: Optional[str] = None
     chat_type: Literal["question", "insight"] = "question"
-    document_ids: Optional[List[str]] = None   # transient only
 ```
 
 ### Response Models
@@ -455,7 +425,7 @@ class SearchResponse(BaseModel):
     chat_id: str
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None
-    tags: List[str] = []
+    tags: List[{"name":str, "fileurl":str}] = []
 
 ```
 
@@ -466,24 +436,28 @@ class InsightResponse(BaseModel):
     id: str
     title: str
     updatedAt: str
+    insight: str
+    user_question: str
     summary: str
-    type: str
     tags: list[str]
+
 ```
 #### `HistoryResponse`
 ```python
-class HistoryResponse(BaseModel):
-    chat_id: str
-    chat_type: Literal["question", "insight"]
-    user_id: str
-    chat_title: Optional[str] = None
-    history: List[HistoryItem] = []
-
 class HistoryItem(BaseModel):
     question: str
     answer: str
     ts: Optional[str] = None
-    tags: List[str] = []          # NEW
+    tags: List[dict] = Field(default_factory=list)  # accept list of dicts
+    follow_up_questions: List[str] = Field(default_factory=list)
+
+class HistoryResponse(BaseModel):
+    chat_id: str
+    chat_type: str
+    user_id: str
+    chat_title: Optional[str]
+    history: List[HistoryItem]
+    document_ids: List[str] = Field(default_factory=list)
 ```
 
 
@@ -518,18 +492,30 @@ VECTOR_INDEX_NAME=questions_index
 ```json
 {
   "_id": {
-    "$oid": "68dbbd27a3c2a2948ed61d82"
+    "$oid": "68df721510c330e5b1f1e432"
   },
-  "ID": "Q1",
-  "user_question": "What is the full tender reference number for the E6 Road Work Package VII?",
-  "detailed_answer": "The **Final Contract Value (FCV) is 46.56 Crore**. This value was achieved through the Reverse Tendering process, resulting in a **3.0% discount** from the Original Estimated Cost Value (ECV) of 48.00 Crore.",
-  "follow_up_question_1": "What is the total amount of the Performance Guarantee (PG) required from the contractor?",
-  "follow_up_question_2": "What is the contractual implication of the Reverse Tendering (L1) clauses on project quality?",
-  "follow_up_question_3": "What type of contract is being used for this project, and what does it entail?",
-  "tags": "['Finance', 'Contract', 'Cost', 'Risk', 'Guntur Irr Phase3.pdf']",
-  "updatedAt": "2025-09-30T11:21:11.576444",
+  "ID": "Q133",
+  "user_question": "As of the last status report (September 27, 2025), what were the key metrics for time elapsed and physical progress?",
+  "detailed_answer": "As of September 27, 2025, the overall project status shows that approximately **25% of the time has elapsed**, against which the project has achieved a **Physical Progress of 20.5%**.",
+  "follow_up_question_1": "What percentage of progress was reported at the meeting?",
+  "follow_up_question_2": "What milestones are achieved and current land clearance status?",
+  "follow_up_question_3": "What action is needed for Abutment A2 by July 31?",
+  "tags": [
+    {
+      "names": [
+        "Project Status",
+        "Physical Progress",
+        "Timeline",
+        "Amaravati E6 Project.pdf"
+      ]
+    },
+    {
+      "file_url": "https://xxxxx"
+    }
+  ],
+  "updatedAt": "2025-10-03T06:49:57.711264",
+  "user_question_short": "What were the key metrics as of September 27, 2025?",
   "question_embedding": Array(1536)
-
 }
 ```
 
@@ -537,17 +523,19 @@ VECTOR_INDEX_NAME=questions_index
 ```json
 {
   "_id": {
-    "$oid": "68db84b9193046d45d8faea0"
+    "$oid": "68db84b9193046d45d8faebc"
   },
-  "Insight ID": "insight_1",
-  "insight": "Consolidated Infrastructure Portfolio Status and Strategic Focus Areas",
-  "detailed_answer": "The portfolio is actively managed across **four major projects** spanning three phases: **Advanced Construction** (Polavaram LMC Bridge, 45% complete on foundation), **Foundational Construction** (Guntur IRR Phase III and Amaravati E6 Road, 5%-20.5% complete), and **Strategic Planning** (Amaravati Airport, ~55% complete). The portfolio's immediate attention is split between resolving **critical regulatory bottlenecks** (Polavaram) and ensuring **foundational quality and land clearance** compliance (Guntur IRR). The Amaravati projects focus on mitigating utility delays (E6 Road) and finalizing strategic financial models (Airport).",
-  "tags": "['Portfolio Summary', 'Status Overview', 'Critical Attention', 'Polavaram', 'Guntur IRR', 'Amaravati E6', 'Amaravati Airport']",
-  "follow_up_question_1": "What is the exact deadline for the contractor to resolve the cross-slope rectification issue on the Guntur IRR Loop Phase III subgrade?",
-  "follow_up_question_2": "Has the necessary night block traffic diversion plan been submitted for the Polavaram LMC Bridge girder launching?",
-  "follow_up_question_3": "What is the total combined estimated contract value (ECV) for the Guntur IRR Loop Phase III and Amaravati E6 Road projects?",
+  "Insight ID": "insight_29",
+  "insight": "Drainage and Utility Ducting Acceleration",
+  "detailed_answer": "The CRDA instructed **parallel deployment** (earthwork at Palakaluru end and drainage works in the middle stretch) following site clearance. The Contractor confirmed mobilization for culvert foundation, and is ahead of schedule on **Utility Duct laying**.",
+  "tags": "['Design', 'Coordination', 'Progress', 'Drainage', 'Utility', 'Guntur Irr Meetings.pdf', 'Guntur Irr Phase3.pdf']",
+  "follow_up_question_1": "How many total box culverts and major pipe culverts are planned for the project?",
+  "follow_up_question_2": "What specific HDPE duct sizes are required for Power and ICT utility ducting?",
+  "follow_up_question_3": "When were the design drawings for Cross-Drainage Structures 1 & 2 due from the Contractor?",
   "updatedAt": "2025-09-30T07:20:25.021100",
-  "user_question": "What is the overall status of the four major infrastructure projects, and which require immediate management attention based on current risks?"
+  "user_question": "Following full site clearance, how is the CRDA accelerating the construction of cross-drainage structures and utility works?",
+  "user_question_short": "How is CRDA speeding up drainage and utility construction?",
+  "summary": "CRDA has initiated parallel deployment with earthwork at Palakaluru and drainage works underway; the Contractor is ahead of schedule on utility duct laying and has mobilized for culvert foundation."
 }
 ```
 
@@ -556,37 +544,41 @@ VECTOR_INDEX_NAME=questions_index
 #### Chat History Storage
 ```
 {
-  "chat_id": "insight_36",
-  "chat_type": "insight",
+  "chat_id": "f8f944c6-64cd-4cab-9a8f-2f72cb94337d",
+  "chat_type": "question",
   "user_id": "admin",
-  "chat_title": "Contractor Mobilization Speed and Timeline Trade-Off Stra...",
+  "chat_title": "Amaravathi Project Overview",
   "history": [
     {
-      "question": "How quickly did the contractor achieve initial mobilization, and what was the trade-off strategy used to maintain the 24-month project timeline despite land acquisition delays?",
-      "answer": "- 90% mobilization (plant, machinery, site office) achieved by April 18, 2025\n- Only 95% of Right-of-Way (ROW) cleared by that time, with a 100m commercial stretch pending eviction\n- Project Director directed contractor to immediately begin work in cleared segments to offset delays\n- Strategy helped maintain the March 2027 completion target\n- 20.5% physical progress achieved by September 2025\n- Approximately 25% of the total project timeline had elapsed by September 2025",
-      "ts": "2025-10-01T12:14:55Z",
+      "question": "amaravathi project details",
+      "answer": "1. The Amaravati E6 Road Project (Package VII) is currently in progress.\n2. The project has achieved approximately 20.5% physical completion.\n3. Completed tasks include earthwork and road formation.\n4. Ongoing tasks involve utility ducting, sewerage, and storm drains.\n5. The project has faced minor delays due to unmapped utilities and pending land clearance.\n6. Despite these delays, the project is on track for its planned completion in March 2027.",
+      "ts": "2025-10-07T05:23:04Z",
       "tags": [
-        "Mobilization",
-        "Timeline",
-        "Project Management",
-        "Land Clearance",
-        "Physical Progress",
-        "Amaravati Meetings Log.pdf",
-        "Amaravati E6 Project.pdf"
-      ]
-    },
-    {
-      "question": "What was the total physical progress achieved by the final review meeting on December 15, 2026?",
-      "answer": "- The key action item for APADCL was to issue land demarcation instruction for Site A to the State Department",
-      "ts": "2025-10-01T12:18:46Z",
-      "tags": [
-        "Action Item",
-        "Site Selection",
-        "Land",
-        "Amaravati Airport Meetings.pdf"
+        {
+          "name": "Project Status",
+          "file_url": ""
+        },
+        {
+          "name": "Identification",
+          "file_url": ""
+        },
+        {
+          "name": "Work Package",
+          "file_url": ""
+        },
+        {
+          "name": "Amaravati E6 Project.pdf",
+          "file_url": "https://s3-practice-ss.s3.ap-south-1.amazonaws.com/data/Amaravati+E6+Road+Project.pdf"
+        }
+      ],
+      "follow_up_questions": [
+        "What is the current reported physical progress percentage as of mid-October 2025, and what construction activity is nearing completion?",
+        "What are the core design specifications for the road, including the number of lanes, carriageway width, and design speed?",
+        "What are the two most significant 'live' utility conflicts identified, and what is the target date for resolving the electrical pole shifting?"
       ]
     }
-  ]
+  ],
+  "document_ids": []
 }
 ```
 
