@@ -102,12 +102,13 @@ async def search_question(request: QuestionRequest):
     try:
         # 1) Document-grounded ONLY if doc_ids exist (no vector fallback)
         if doc_ids:
-            doc_answer, doc_follow, doc_tags, doc_has = document_search(doc_ids, request, chat_context, openai_client)
+            doc_answer, doc_follow, doc_tags, doc_has , file_names = document_search(doc_ids, request, chat_context, openai_client)
             final_answer = doc_answer
             follow_up_questions = doc_follow
             tags = doc_tags  # already list[dict] from document_search
             has_answer = doc_has
             file_url = ""  # document_search does not provide file_url
+            file_names = file_names
 
             # Do NOT run vector search when docs are attached.
             if not has_answer:
@@ -118,7 +119,7 @@ async def search_question(request: QuestionRequest):
                 file_url = ""
         else:
             # 2) No docs -> use vector search
-            vec_answer, vec_follow, vec_tags, vec_file_url = vector_search(request, chat_context, openai_client, collection)
+            vec_answer, vec_follow, vec_tags, vec_file_url , file_names = vector_search(request, chat_context, openai_client, collection)
             final_answer = vec_answer
             follow_up_questions = vec_follow
             tags = vec_tags  # list[dict] from vector_search
@@ -200,7 +201,8 @@ async def search_question(request: QuestionRequest):
             chat_type=chat_type,
             title=title,
             tags=tags,
-            file_url=file_url
+            file_url=file_url,
+            file_names=file_names if 'file_names' in locals() else []  # Ensure file_names is included
         )
     finally:
         if mongo_client:

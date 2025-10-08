@@ -175,7 +175,8 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
 
     # Store tags as list of objects: [{name, file_url}]
     tags = [{"name": str(n).strip(), "file_url": ""} for n in doc_tags if str(n).strip()]
-    return answer_text, follow_up_questions, tags, has_answer
+    file_names = [{"filename": str(n).strip(), "file_url": ""} for n in doc_tags if str(n).strip()]
+    return answer_text, follow_up_questions, tags, has_answer , file_names
 
 def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[str], str]:
     query_embedding = get_embedding(request.question, openai_client)
@@ -210,7 +211,8 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
             "tags": 1,
             "file_url": 1,
             "similarity_score": 1,
-            "user_question_short": 1
+            "user_question_short": 1,
+
         }}
     ]
     results = list(collection.aggregate(pipeline))
@@ -307,12 +309,14 @@ Your goal is to synthesize the provided context into a detailed and professional
     file_url = best.get("file_url", "") or ""
     tags = best.get("tags", [])
     final_tags: List[dict] = []
+    file_names = []
     names = tags[0].get("names",[])
     for name in names:
         if name.endswith(".pdf"):
             final_tags.append({"name":name, "file_url": data1["filenames"].get(name, "")})
+            file_names.append({"filename":name, "file_url": data1["filenames"].get(name, "")})
         else:
             final_tags.append({"name":name, "file_url":""})
     # print(final_tags)
 
-    return final_answer, follow_up_questions, final_tags, file_url
+    return final_answer, follow_up_questions, final_tags, file_url, file_names

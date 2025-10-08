@@ -16,6 +16,7 @@ class SearchResponse(BaseModel):
     chat_type: Literal["question", "insight"]
     title: Optional[str] = None
     tags: List[dict] = Field(default_factory=list)  # accept list of dicts
+    file_names: Optional[List[dict]]
 
 
 class ChatSummary(BaseModel):
