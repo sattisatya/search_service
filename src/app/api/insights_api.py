@@ -20,15 +20,32 @@ async def get_insights():
         raise HTTPException(status_code=500, detail="Database connection failed")
     try:
         insights = []
-        cursor = collection.find({}, {
-            "Insight ID": 1,
-            "insight": 1,
-            "user_question_short": 1,
-            "tags": 1,
-            "updatedAt": 1,
-            "summary": 1,
-
-        }).sort([("_id", -1)])
+        pipeline = [
+            {
+                "$addFields": {
+                    "insight_num": {
+                        "$toInt": {
+                            "$arrayElemAt": [
+                                {"$split": ["$Insight ID", "_"]}, -1
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "Insight ID": 1,
+                    "insight": 1,
+                    "user_question_short": 1,
+                    "tags": 1,
+                    "updatedAt": 1,
+                    "summary": 1,
+                    "insight_num": 1  # Include this field in the projection
+                }
+            },
+            {"$sort": {"insight_num": 1}}  # Sort by the numeric field
+        ]
+        cursor = collection.aggregate(pipeline)
 
         for doc in cursor:
             # Process tags
