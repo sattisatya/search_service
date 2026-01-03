@@ -5,9 +5,22 @@ import redis
 from datetime import datetime, timezone
 from typing import Optional, List
 
-redis_host = os.getenv("REDIS_HOST", "localhost")
-redis_port = int(os.getenv("REDIS_PORT", 6379))
-redis_client = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
+redis_host = os.getenv("REDIS_HOST", "redis-19430.c13.us-east-1-3.ec2.cloud.redislabs.com")
+redis_port = int(os.getenv("REDIS_PORT", 19430))
+redis_username = os.getenv("REDIS_USERNAME", "default")
+redis_password = os.getenv("REDIS_PASSWORD", "zEFMZF8ESY6uEBVlCvnPjaMbz0KlPnMo")
+# Allow toggling TLS because some RedisCloud endpoints expose TLS/non-TLS on different ports
+redis_use_ssl = os.getenv("REDIS_SSL", "false").lower() in ("1", "true", "yes", "on")
+
+redis_client = redis.Redis(
+    host=redis_host,
+    port=redis_port,
+    username=redis_username,
+    password=redis_password,
+    db=0,
+    decode_responses=True,
+    ssl=redis_use_ssl,
+)
 
 CHAT_ORDER_ZSET = "chat:order"
 DEFAULT_CHAT_TYPES = ["question", "insight"]
