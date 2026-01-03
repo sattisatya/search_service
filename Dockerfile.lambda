@@ -1,0 +1,20 @@
+# AWS Lambda Python base image
+FROM amazon/aws-lambda-python:3.11
+
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Mangum for Lambda FastAPI support
+RUN pip install mangum
+
+# Copy project files
+COPY . .
+
+# Command to run Lambda handler
+CMD ["src/lambda_handler.lambda_handler"]
