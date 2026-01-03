@@ -3,7 +3,7 @@ uvicorn==0.24.0
 python-dotenv==1.0.0
 pymongo==4.6.0
 openai==1.106.1
-numpy==1.26.2
+redis==5.0.1
 redis==5.0.1
 pydantic==2.11.9
 typing-extensions==4.14.0

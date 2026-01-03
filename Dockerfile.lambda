@@ -1,17 +1,15 @@
 # AWS Lambda Python base image
-FROM amazon/aws-lambda-python:3.11
-
-# Upgrade pip
-RUN pip install --upgrade pip
+FROM public.ecr.aws/lambda/python:3.11
 
 # Copy requirements file
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Mangum for Lambda FastAPI support
-RUN pip install mangum
+# Install Python dependencies & Mangum
+# Remove cache and build tools to save space
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir mangum && \
+    rm -rf /root/.cache
 
 # Copy project files
 COPY . .
