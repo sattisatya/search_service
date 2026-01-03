@@ -2,12 +2,13 @@ import os
 import json
 import re
 import ast
+import time  # Added for profiling
 from typing import List, Tuple
 
 from click import prompt
 from ..services.mongo_service import connect_to_mongodb
 from ..models.model import QuestionRequest
-from ..services.openai_service import get_embedding,chat_completion
+from ..services.openai_service import get_embedding, chat_completion
 
 
 
@@ -53,6 +54,8 @@ def _limit_chat_context(chat_context: str, max_turns: int = CHAT_CONTEXT_MAX_TUR
     return limited
 
 def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: str, openai_client) -> Tuple[str, List[str], List[dict], bool]:
+    start_time = time.time()  # Profiling start
+    
     # ----------------- If doc_ids provided: build document context -----------------
     doc_context_block = "No referenced documents."
     snippets = []
@@ -60,20 +63,25 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     up_client, up_coll = connect_to_mongodb("upload")
     if up_client is not None and up_coll is not None:
         try:
-            cur = up_coll.find({"id": {"$in": doc_ids}}, {"id": 1, "file_name": 1, "text": 1})
+            # Limit to first 5 docs and truncate text to 2000 chars each to reduce load
+            cur = up_coll.find({"id": {"$in": doc_ids}}, {"id": 1, "file_name": 1, "text": 1}).limit(5)
             for d in cur:
                 file_name = d.get("file_name") or "Unnamed"
                 if file_name not in doc_tags:
                     doc_tags.append(file_name)
-                text = (d.get("text", "") or "").strip()
+                text = (d.get("text", "") or "").strip()  # Truncate to 2000 chars
                 snippets.append(f"[DOC {file_name}]\n{text}")
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"MongoDB query error: {e}")
         finally:
             try:
                 up_client.close()
             except Exception:
                 pass
+    
+    query_time = time.time() - start_time  # Profiling query time
+    print(f"MongoDB query took {query_time:.2f}s")
+    
     if snippets:
         doc_context_block = "\n\n".join(snippets)
 
@@ -108,9 +116,11 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     QUESTION: {request.question}
     """
     # print(prompt)
+    
+    api_start = time.time()  # Profiling API start
     llm_resp = chat_completion(
         openai_client,
-        model="gpt-4o",
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Return ONLY valid JSON matching the required schema."},
             {"role": "user", "content": prompt}
@@ -118,6 +128,9 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
         temperature=0.4,
         max_tokens=900
     )
+    api_time = time.time() - api_start  # Profiling API time
+    print(f"OpenAI API call took {api_time:.2f}s")
+    
     raw_content = llm_resp.choices[0].message.content.strip()
 
     # ---------- JSON extraction / normalization ----------
@@ -176,6 +189,8 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     # Store tags as list of objects: [{name, file_url}]
     tags = [{"name": str(n).strip(), "file_url": ""} for n in doc_tags if str(n).strip()]
     file_names = [{"filename": str(n).strip(), "file_url": ""} for n in doc_tags if str(n).strip()]
+    total_time = time.time() - start_time
+    print(f"Total document_search took {total_time:.2f}s")
     return answer_text, follow_up_questions, tags, has_answer , file_names
 
 def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[str], str]:
