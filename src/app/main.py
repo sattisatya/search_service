@@ -3,6 +3,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from src.app.api.search_api import router as search_router
 from src.app.api.insights_api import router as insights_router
 from src.app.api.chats import router as chats_router
@@ -35,6 +36,9 @@ def configure_logging() -> None:
 configure_logging()
 
 app = FastAPI(title="Unified Service")
+
+# Trust proxy headers (essential for Lambda/Container environments)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
 # CORS: allow all origins (adjust later for security)
 app.add_middleware(

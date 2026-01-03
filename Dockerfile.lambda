@@ -1,12 +1,15 @@
-# AWS Lambda Python base image
-FROM public.ecr.aws/lambda/python:3.11
+# Use Python 3.11 slim image (Debian-based) for smaller size
+FROM python:3.11-slim
+
+# Set working directory to /var/task (standard for Lambda)
+WORKDIR /var/task
 
 # Copy requirements file
 COPY requirements.txt .
 
-# Install Python dependencies & Mangum
-# Remove cache and build tools to save space
+# Install dependencies
 RUN pip install --upgrade pip && \
+    pip install --no-cache-dir awslambdaric && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir mangum && \
     rm -rf /root/.cache
@@ -14,5 +17,26 @@ RUN pip install --upgrade pip && \
 # Copy project files
 COPY . .
 
-# Command to run Lambda handler
-CMD ["src/lambda_handler.lambda_handler"]
+# Download and install Lambda Runtime Interface Emulator (RIE) for local testing
+# Note: The RIE binary is now a direct executable, not a zip file.
+# We install it to /usr/local/bin to avoid it being auto-discovered as an extension in /opt/extensions
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    curl -L -o /usr/local/bin/aws-lambda-rie https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie && \
+    chmod +x /usr/local/bin/aws-lambda-rie && \
+    apt-get remove -y curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create entrypoint script that handles both local and AWS Lambda environments
+# Note: We use 'python' instead of '/usr/local/bin/python' to be safe, as PATH is set correctly.
+RUN echo '#!/bin/bash\n\
+if [ -z "$AWS_LAMBDA_RUNTIME_API" ]; then\n\
+  # Local testing mode - use RIE\n\
+  exec /usr/local/bin/aws-lambda-rie python -m awslambdaric src.lambda_handler.lambda_handler\n\
+else\n\
+  # AWS Lambda mode\n\
+  exec python -m awslambdaric src.lambda_handler.lambda_handler\n\
+fi' > /var/task/entrypoint.sh && chmod +x /var/task/entrypoint.sh
+
+ENTRYPOINT ["/var/task/entrypoint.sh"]

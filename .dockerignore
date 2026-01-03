@@ -3,3 +3,12 @@
 .git
 __pycache__
 README.md
+notebooks/
+tests/
+.vscode/
+.pytest_cache/
+*.log
+Dockerfile
+Dockerfile.lambda
+test_lambda_endpoints.py
+notebooks

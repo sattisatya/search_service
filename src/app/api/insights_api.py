@@ -13,7 +13,7 @@ load_dotenv()
 router = APIRouter(prefix="/insights", tags=["insights"])
 
 # List insights  (GET /insights)
-@router.get("/", response_model=List[InsightResponse])
+@router.get("", response_model=List[InsightResponse])
 async def get_insights():
     mongo_client, collection = connect_to_mongodb(os.getenv("insights_collection_name", "insights"))
     if mongo_client is None or collection is None:
