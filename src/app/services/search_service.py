@@ -4,8 +4,10 @@ import re
 import ast
 import time  # Added for profiling
 from typing import List, Tuple
+import logging
 
 from click import prompt
+from fastapi import logger
 from ..services.mongo_service import connect_to_mongodb
 from ..models.model import QuestionRequest
 from ..services.openai_service import get_embedding, chat_completion
@@ -19,6 +21,8 @@ else:
     with open(json_path, 'r', encoding='utf-8') as f:
         data1 = json.load(f)
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # Add: limit previous conversation included in LLM prompts
 CHAT_CONTEXT_MAX_TURNS = int(os.getenv("CHAT_CONTEXT_MAX_TURNS", "3"))
@@ -193,8 +197,10 @@ def document_search(doc_ids: List[str], request: QuestionRequest, chat_context: 
     print(f"Total document_search took {total_time:.2f}s")
     return answer_text, follow_up_questions, tags, has_answer , file_names
 
-def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[str], str]:
+def vector_search(request: QuestionRequest, chat_context: str, openai_client, collection) -> Tuple[str, List[str], List[dict], str, List[dict]]:
+    logger.info("Starting vector search for question: %s", request.question)
     query_embedding = get_embedding(request.question, openai_client)
+    logger.info("Vector search embedding obtained. %d dimensions.", len(query_embedding))
     vector_index = os.getenv("VECTOR_INDEX_NAME", "questions_index")
 
     # Use limited chat context for tone only
@@ -206,7 +212,10 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
         # Add explicit truncation notice if we actually trimmed
         if chat_context and chat_context_limited != chat_context:
             prev_conv_block += "\n[... truncated ...]"
-
+    logger.debug("mongo collection: %s", collection.name)
+    logger.debug("Vector search using index: %s", vector_index)
+    logger.debug("Previous conversation block: %s", prev_conv_block)
+    logger.debug("collection content count: %d", collection.count_documents({}))
     pipeline = [
         {"$vectorSearch": {
             "index": vector_index,
@@ -231,11 +240,12 @@ def vector_search(request: QuestionRequest, chat_context: str, openai_client, co
         }}
     ]
     results = list(collection.aggregate(pipeline))
+    logger.debug("Vector search returned %d results.", len(results))
 
     if not results:
-        # Always return a 4‑tuple
+        # Always return a 5‑tuple
         fallback = "I cannot answer based on stored knowledge: no relevant indexed documents were found. You may upload a document related to your question."
-        return fallback, [], [], ""
+        return fallback, [], [], "", []
 
     best = results[0]
 
@@ -310,9 +320,9 @@ Your goal is to synthesize the provided context into a detailed and professional
 
     llm_resp = chat_completion(
         openai_client,
-        model="gpt-4o",
+        deployment=os.getenv('GPT_4_1_DEPLOYMENT', 'gpt-4.1'),
         messages=[
-            {"role": "system", "content": "Helpful, precise, no hallucinations."},
+            {"role": "system", "content": "Helpful, precise, no hallacinations."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.7,
@@ -325,7 +335,15 @@ Your goal is to synthesize the provided context into a detailed and professional
     tags = best.get("tags", [])
     final_tags: List[dict] = []
     file_names = []
-    names = tags[0].get("names",[])
+    
+    # Extract names from tags safely
+    names = []
+    if isinstance(tags, list) and len(tags) > 0:
+        if isinstance(tags[0], dict):
+            names = tags[0].get("names", [])
+        elif isinstance(tags[0], str):
+            names = [tags[0]]
+    
     for name in names:
         if name.endswith(".pdf"):
             final_tags.append({"name":name, "file_url": data1["filenames"].get(name, "")})

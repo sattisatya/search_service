@@ -6,6 +6,7 @@ from typing import Any
 
 from ..services.search_service import document_search, vector_search
 from ..models.model import QuestionRequest, SearchResponse
+import logging
 
 from ..services.redis_service import (
     redis_client,
@@ -21,7 +22,12 @@ from ..services.mongo_service import connect_to_mongodb
 from ..services.openai_service import get_client, generate_chat_title
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)  
+
 router = APIRouter(tags=["search"])
+
 
 def iso_utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -64,6 +70,7 @@ def ensure_tag_objects(raw: Any) -> list[dict]:
 
 @router.post("/search", response_model=SearchResponse)
 async def search_question(request: QuestionRequest):
+    logger.debug(f"Received search request: {request}")
     chat_id = request.chat_id or str(uuid.uuid4())
     chat_type = request.chat_type
     openai_client = get_client()

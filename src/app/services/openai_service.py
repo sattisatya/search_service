@@ -3,11 +3,20 @@ import re
 from openai import AzureOpenAI
 from fastapi import HTTPException
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 def get_client() -> AzureOpenAI:
+
+    load_dotenv()
+    
     return AzureOpenAI(
         api_key=os.getenv('AZURE_AI_API_KEY'),
-        api_version="2024-10-21",
+        api_version="2024-12-01-preview",
         azure_endpoint=os.getenv('AZURE_AI_ENDPOINT')
     )
 

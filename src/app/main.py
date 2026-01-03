@@ -1,3 +1,6 @@
+import logging
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.app.api.search_api import router as search_router
@@ -5,6 +8,31 @@ from src.app.api.insights_api import router as insights_router
 from src.app.api.chats import router as chats_router
 from src.app.api.file_upload import router as upload_router
 from fastapi import APIRouter
+
+
+def configure_logging() -> None:
+    """Raise log level to capture module DEBUG logs without changing handlers elsewhere."""
+    log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
+    formatter = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
+
+    root = logging.getLogger()
+    root.setLevel(log_level)
+
+    if root.handlers:
+        for handler in root.handlers:
+            handler.setLevel(log_level)
+            handler.setFormatter(formatter)
+    else:
+        handler = logging.StreamHandler()
+        handler.setLevel(log_level)
+        handler.setFormatter(formatter)
+        root.addHandler(handler)
+
+    for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+        logging.getLogger(name).setLevel(log_level)
+
+
+configure_logging()
 
 app = FastAPI(title="Unified Service")
 
