@@ -87,7 +87,8 @@ async def get_history(chat_id: str, chat_type: Literal["question", "insight"]):
 
 # update_chat_meta_on_message imported from redis_service
 # list_chats and delete_session unchanged but now use redis_service helpers
-@router.get("/", response_model=List[ChatListItem])
+@router.get("")
+@router.get("/")
 async def list_chats(include_insight: bool = True, include_question: bool = True):
     answer_expose_limit = 1
     if answer_expose_limit < 0:

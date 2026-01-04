@@ -35,7 +35,7 @@ def configure_logging() -> None:
 
 configure_logging()
 
-app = FastAPI(title="Unified Service")
+app = FastAPI(title="Unified Service", redirect_slashes=False)
 
 # Trust proxy headers (essential for Lambda/Container environments)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
